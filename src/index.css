@@ -162,13 +162,50 @@
 
 /* Resizer panel styling */
 .resize-handle {
-  @apply bg-white/5 hover:bg-primary/20;
-  transition: background-color 0.2s;
+  @apply bg-white/10 hover:bg-primary/30 transition-colors duration-300;
   width: 4px;
+  position: relative;
 }
 
 .resize-handle:hover, 
-.resize-handle[data-resize-handle-active] {
-  @apply bg-primary/40;
+.resize-handle[data-resize-handle-active],
+.resize-handle-active {
+  @apply bg-primary/60;
   width: 4px;
+}
+
+.resize-handle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 24px;
+  @apply bg-primary/60;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resize-handle:hover::after,
+.resize-handle[data-resize-handle-active]::after,
+.resize-handle-active::after {
+  opacity: 1;
+}
+
+/* Add styles for the device selector buttons */
+.device-selector {
+  @apply flex bg-black/40 rounded-full p-1 backdrop-blur-sm;
+}
+
+.device-selector-button {
+  @apply h-8 px-3 text-xs rounded-full flex items-center gap-1.5 transition-all duration-200;
+}
+
+.device-selector-button.active {
+  @apply bg-white/10 text-white;
+}
+
+.device-selector-button:not(.active) {
+  @apply text-white/70 hover:text-white/90 hover:bg-white/5;
 }

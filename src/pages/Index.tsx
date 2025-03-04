@@ -63,7 +63,8 @@ const Index = () => {
             <ChatPanel />
           </ResizablePanel>
           
-          <ResizableHandle className="resize-handle" />
+          {/* Improved resize handle with better visibility */}
+          <ResizableHandle className="resize-handle group hover:resize-handle-active" />
           
           {/* Right Side - Preview/Code */}
           <ResizablePanel defaultSize={70} className="flex flex-col">

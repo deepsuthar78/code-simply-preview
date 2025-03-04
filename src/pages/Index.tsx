@@ -8,6 +8,11 @@ import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Code, Eye } from 'lucide-react';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 const initialCode = `
 import React from 'react';
@@ -46,65 +51,74 @@ const Index = () => {
     <div className="h-screen w-full flex flex-col bg-gradient-to-br from-background via-background to-background/90 overflow-hidden">
       <Navbar />
       
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Side - Chat Panel */}
-        <div className="w-[400px] border-r border-white/10 glass-morphism flex flex-col bg-background/95">
-          <ChatPanel />
-        </div>
-        
-        {/* Right Side - Preview/Code */}
-        <div className="flex-1 flex flex-col">
-          {/* Tabs for Preview/Code */}
-          <div className="border-b border-white/10 flex glass-morphism backdrop-blur-lg">
-            <Button
-              variant="ghost"
-              className={cn(
-                "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
-                activeTab === 'preview' 
-                  ? "border-primary text-primary" 
-                  : "border-transparent text-muted-foreground"
-              )}
-              onClick={() => setActiveTab('preview')}
-            >
-              <Eye size={16} className="mr-2" />
-              Preview
-            </Button>
-            <Button
-              variant="ghost"
-              className={cn(
-                "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
-                activeTab === 'code' 
-                  ? "border-primary text-primary" 
-                  : "border-transparent text-muted-foreground"
-              )}
-              onClick={() => setActiveTab('code')}
-            >
-              <Code size={16} className="mr-2" />
-              Code
-            </Button>
-          </div>
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Left Side - Chat Panel */}
+          <ResizablePanel 
+            defaultSize={30} 
+            minSize={20} 
+            maxSize={50}
+            className="border-r border-white/10 glass-morphism bg-background/95"
+          >
+            <ChatPanel />
+          </ResizablePanel>
           
-          {/* Content area */}
-          <div className="flex-1 overflow-hidden backdrop-blur-sm">
-            <div className={cn(
-              "w-full h-full transition-all duration-300 ease-in-out",
-              activeTab === 'preview' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute'
-            )}>
-              {activeTab === 'preview' && (
-                <Preview code={compiledCode} error={error} className="h-full" />
-              )}
+          <ResizableHandle className="resize-handle" />
+          
+          {/* Right Side - Preview/Code */}
+          <ResizablePanel defaultSize={70} className="flex flex-col">
+            {/* Tabs for Preview/Code */}
+            <div className="border-b border-white/10 flex glass-morphism backdrop-blur-lg">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
+                  activeTab === 'preview' 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground"
+                )}
+                onClick={() => setActiveTab('preview')}
+              >
+                <Eye size={16} className="mr-2" />
+                Preview
+              </Button>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
+                  activeTab === 'code' 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground"
+                )}
+                onClick={() => setActiveTab('code')}
+              >
+                <Code size={16} className="mr-2" />
+                Code
+              </Button>
             </div>
             
-            <div className={cn(
-              "w-full h-full transition-all duration-300 ease-in-out",
-              activeTab === 'code' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full absolute'
-            )}>
-              {activeTab === 'code' && (
-                <Editor onCodeChange={handleCodeChange} initialCode={code} className="h-full" />
-              )}
+            {/* Content area */}
+            <div className="flex-1 overflow-hidden backdrop-blur-sm">
+              <div className={cn(
+                "w-full h-full transition-all duration-300 ease-in-out",
+                activeTab === 'preview' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute'
+              )}>
+                {activeTab === 'preview' && (
+                  <Preview code={compiledCode} error={error} className="h-full" />
+                )}
+              </div>
+              
+              <div className={cn(
+                "w-full h-full transition-all duration-300 ease-in-out",
+                activeTab === 'code' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full absolute'
+              )}>
+                {activeTab === 'code' && (
+                  <Editor onCodeChange={handleCodeChange} initialCode={code} className="h-full" />
+                )}
+              </div>
             </div>
-          </div>
-        </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
       
       <div className="glass-morphism border-t border-white/10 py-2 px-4 text-xs text-white/50 flex justify-between items-center backdrop-blur-md">

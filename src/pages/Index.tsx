@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Editor from '@/components/Editor';
 import Preview from '@/components/Preview';
+import ChatPanel from '@/components/ChatPanel';
 import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
-import { PanelLeft, PanelRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const initialCode = `
@@ -35,21 +35,10 @@ export default MyComponent;
 
 const Index = () => {
   const { code, setCode, compiledCode, error } = useCodeState({ initialCode });
-  const [editorCollapsed, setEditorCollapsed] = useState(false);
-  const [previewCollapsed, setPreviewCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
-  };
-
-  const toggleEditor = () => {
-    setEditorCollapsed(!editorCollapsed);
-    if (previewCollapsed) setPreviewCollapsed(false);
-  };
-
-  const togglePreview = () => {
-    setPreviewCollapsed(!previewCollapsed);
-    if (editorCollapsed) setEditorCollapsed(false);
   };
 
   return (
@@ -57,54 +46,49 @@ const Index = () => {
       <Navbar />
       
       <div className="flex-1 flex overflow-hidden">
-        <div className={cn(
-          "flex-1 transition-all duration-300 ease-in-out",
-          editorCollapsed ? "w-12 flex-grow-0" : "flex-1",
-          previewCollapsed ? "flex-none" : ""
-        )}>
-          {editorCollapsed ? (
-            <div className="h-full w-12 flex flex-col items-center justify-center border-r border-white/5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-white/10"
-                onClick={toggleEditor}
-              >
-                <PanelRight size={18} />
-              </Button>
-            </div>
-          ) : (
-            <Editor 
-              className="animate-fade-in" 
-              onCodeChange={handleCodeChange} 
-              initialCode={initialCode}
-            />
-          )}
+        {/* Left Side - Chat Panel */}
+        <div className="w-[400px] border-r border-white/5 flex flex-col bg-background/95">
+          <ChatPanel />
         </div>
         
-        <div className={cn(
-          "flex-1 transition-all duration-300 ease-in-out",
-          previewCollapsed ? "w-12 flex-grow-0" : "flex-1",
-          editorCollapsed ? "flex-none" : ""
-        )}>
-          {previewCollapsed ? (
-            <div className="h-full w-12 flex flex-col items-center justify-center border-l border-white/5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-white/10"
-                onClick={togglePreview}
-              >
-                <PanelLeft size={18} />
-              </Button>
-            </div>
-          ) : (
-            <Preview 
-              className="animate-fade-in" 
-              code={compiledCode} 
-              error={error}
-            />
-          )}
+        {/* Right Side - Preview/Code */}
+        <div className="flex-1 flex flex-col">
+          {/* Tabs for Preview/Code */}
+          <div className="border-b border-white/5 flex">
+            <Button
+              variant="ghost"
+              className={cn(
+                "rounded-none border-b-2 px-4 py-2",
+                activeTab === 'preview' 
+                  ? "border-primary text-primary" 
+                  : "border-transparent text-muted-foreground"
+              )}
+              onClick={() => setActiveTab('preview')}
+            >
+              Preview
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(
+                "rounded-none border-b-2 px-4 py-2",
+                activeTab === 'code' 
+                  ? "border-primary text-primary" 
+                  : "border-transparent text-muted-foreground"
+              )}
+              onClick={() => setActiveTab('code')}
+            >
+              Code
+            </Button>
+          </div>
+          
+          {/* Content area */}
+          <div className="flex-1 overflow-hidden">
+            {activeTab === 'preview' ? (
+              <Preview code={compiledCode} error={error} className="h-full" />
+            ) : (
+              <Editor onCodeChange={handleCodeChange} initialCode={code} className="h-full" />
+            )}
+          </div>
         </div>
       </div>
       

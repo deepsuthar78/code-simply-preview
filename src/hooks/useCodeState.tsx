@@ -25,7 +25,7 @@ export default MyComponent;
 
 export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = {}) => {
   const [code, setCode] = useState(initialCode);
-  const [compiledCode, setCompiledCode] = useState<string>('');
+  const [compiledCode, setCompiledCode] = useState<string>(initialCode);
   const [error, setError] = useState<string | null>(null);
 
   const updateCode = useCallback((newCode: string) => {

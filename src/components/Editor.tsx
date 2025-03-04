@@ -61,12 +61,6 @@ const Editor: React.FC<EditorProps> = ({
 
   return (
     <div className={cn("w-full h-full flex flex-col bg-background/95", className)}>
-      <div className="px-4 py-2 border-b border-white/5 flex items-center justify-between">
-        <div className="flex items-center">
-          <span className="text-sm font-medium">Editor</span>
-        </div>
-      </div>
-      
       <div className="flex-1 overflow-hidden flex">
         <div 
           ref={lineNumbersRef} 

@@ -1,8 +1,9 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Play, RefreshCw } from 'lucide-react';
+import { Play, RefreshCw, Laptop, Tablet, Smartphone, Maximize, Clipboard, Check, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from "@/hooks/use-toast";
 
 interface PreviewProps {
   className?: string;
@@ -18,6 +19,9 @@ const Preview: React.FC<PreviewProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewportSize, setViewportSize] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   // Function to refresh the preview
   const refreshPreview = () => {
@@ -38,6 +42,15 @@ const Preview: React.FC<PreviewProps> = ({
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
               padding: 1rem;
+              transition: all 0.3s ease;
+            }
+            
+            .preview-root {
+              transition: all 0.3s ease;
+            }
+            
+            * {
+              transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
             }
           </style>
           <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
@@ -50,11 +63,29 @@ const Preview: React.FC<PreviewProps> = ({
             // we would properly compile JSX and run it
             document.getElementById('root').innerHTML = 
               '<div class="flex items-center justify-center min-h-screen">' +
-              '<div class="text-center">' +
-              '<p>Preview content would appear here</p>' +
-              '<p class="text-xs text-gray-500 mt-2">Using live JSX/TSX compilation</p>' +
+              '<div class="text-center p-8 bg-white rounded-xl shadow-xl transform transition hover:scale-105">' +
+              '<h2 class="text-2xl font-bold text-blue-600 mb-4">Interactive Preview</h2>' +
+              '<p class="text-gray-700">Your code would be rendered here in a real implementation</p>' +
+              '<div class="mt-6 flex justify-center gap-4">' +
+              '<button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Button 1</button>' +
+              '<button class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">Button 2</button>' +
+              '</div>' +
+              '<p class="text-xs text-gray-500 mt-6">Using live JSX/TSX compilation</p>' +
               '</div>' +
               '</div>';
+              
+            // Add some interactivity to the preview
+            setTimeout(() => {
+              const buttons = document.querySelectorAll('button');
+              buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                  button.textContent = 'Clicked!';
+                  setTimeout(() => {
+                    button.textContent = button.textContent.replace('Clicked!', button.textContent.includes('1') ? 'Button 1' : 'Button 2');
+                  }, 1000);
+                });
+              });
+            }, 500);
           </script>
         </body>
       </html>
@@ -67,6 +98,23 @@ const Preview: React.FC<PreviewProps> = ({
       setIsLoading(false);
     };
   };
+  
+  // Copy code to clipboard
+  const copyCode = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    toast({
+      title: "Code Copied",
+      description: "The code has been copied to your clipboard.",
+      duration: 2000,
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  // Toggle fullscreen preview
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   // Initial render and when code changes
   useEffect(() => {
@@ -74,10 +122,10 @@ const Preview: React.FC<PreviewProps> = ({
   }, [code]);
 
   return (
-    <div className={cn("w-full h-full flex flex-col bg-white/5", className)}>
-      <div className="px-4 py-2 border-b border-white/5 flex items-center justify-between">
+    <div className={cn("w-full h-full flex flex-col neo-blur", className)}>
+      <div className="px-4 py-2 border-b border-white/10 flex items-center justify-between glass-morphism backdrop-blur-lg">
         <div className="flex items-center">
-          <span className="text-sm font-medium">Preview</span>
+          <span className="text-sm font-medium text-white/90">Preview</span>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -86,33 +134,36 @@ const Preview: React.FC<PreviewProps> = ({
               variant="ghost" 
               size="sm" 
               className={cn(
-                "text-xs rounded-md flex items-center px-2", 
+                "text-xs rounded-md flex items-center px-2 transition-all duration-200", 
                 viewportSize === 'desktop' ? "bg-white/10" : "hover:bg-white/5"
               )}
               onClick={() => setViewportSize('desktop')}
             >
+              <Laptop size={14} className="mr-1" />
               Desktop
             </Button>
             <Button 
               variant="ghost" 
               size="sm" 
               className={cn(
-                "text-xs rounded-md flex items-center px-2", 
+                "text-xs rounded-md flex items-center px-2 transition-all duration-200", 
                 viewportSize === 'tablet' ? "bg-white/10" : "hover:bg-white/5"
               )}
               onClick={() => setViewportSize('tablet')}
             >
+              <Tablet size={14} className="mr-1" />
               Tablet
             </Button>
             <Button 
               variant="ghost" 
               size="sm" 
               className={cn(
-                "text-xs rounded-md flex items-center px-2", 
+                "text-xs rounded-md flex items-center px-2 transition-all duration-200", 
                 viewportSize === 'mobile' ? "bg-white/10" : "hover:bg-white/5"
               )}
               onClick={() => setViewportSize('mobile')}
             >
+              <Smartphone size={14} className="mr-1" />
               Mobile
             </Button>
           </div>
@@ -120,7 +171,25 @@ const Preview: React.FC<PreviewProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-full hover:bg-white/10"
+            className="rounded-full hover:bg-white/10 transition-all duration-200"
+            onClick={copyCode}
+          >
+            {copied ? <Check size={18} className="text-green-500" /> : <Clipboard size={18} />}
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full hover:bg-white/10 transition-all duration-200"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? <EyeOff size={18} /> : <Maximize size={18} />}
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full hover:bg-white/10 transition-all duration-200"
             onClick={refreshPreview}
           >
             {isLoading ? (
@@ -132,19 +201,23 @@ const Preview: React.FC<PreviewProps> = ({
         </div>
       </div>
       
-      <div className="flex-1 flex items-center justify-center overflow-hidden bg-black/20 backdrop-blur-sm">
+      <div className={cn(
+        "flex-1 flex items-center justify-center overflow-hidden bg-black/20 backdrop-blur-sm transition-all duration-300",
+        isFullscreen ? "p-0" : "p-4"
+      )}>
         <div 
           className={cn(
-            "transition-all duration-300 h-full bg-white overflow-hidden",
+            "transition-all duration-300 h-full glass-morphism bg-white shadow-lg overflow-hidden",
             viewportSize === 'desktop' ? "w-full" : 
-            viewportSize === 'tablet' ? "w-[768px] shadow-lg" : 
-            "w-[375px] shadow-lg"
+            viewportSize === 'tablet' ? "w-[768px]" : 
+            "w-[375px]",
+            isFullscreen ? "rounded-none" : "rounded-lg"
           )}
         >
           {error ? (
-            <div className="p-4 bg-red-500/10 text-red-300 rounded-md m-4 font-mono text-sm overflow-auto">
+            <div className="p-4 bg-red-500/10 text-red-300 rounded-md m-4 font-mono text-sm overflow-auto border border-red-500/20 animate-pulse-subtle">
               <p className="font-bold">Error:</p>
-              <pre>{error}</pre>
+              <pre className="mt-2 whitespace-pre-wrap">{error}</pre>
             </div>
           ) : (
             <iframe 

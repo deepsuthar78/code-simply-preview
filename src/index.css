@@ -14,8 +14,8 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 262 83.3% 67.8%;
+    --primary-foreground: 210 20% 98%;
     
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -23,7 +23,7 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     
-    --accent: 240 3.7% 15.9%;
+    --accent: 262 83.3% 67.8%;
     --accent-foreground: 0 0% 98%;
     
     --destructive: 0 62.8% 30.6%;
@@ -39,7 +39,7 @@
 
 @layer base {
   * {
-    @apply border-border selection:bg-white/10 selection:text-white;
+    @apply border-border selection:bg-primary/20 selection:text-white;
   }
   
   body {
@@ -68,6 +68,14 @@
   .neo-blur {
     @apply backdrop-blur-2xl bg-black/40 border border-white/10;
   }
+  
+  .text-gradient {
+    @apply bg-gradient-to-br from-white via-white/90 to-white/70 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-primary {
+    @apply bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent;
+  }
 }
 
 #root {
@@ -75,7 +83,9 @@
 }
 
 .code-editor {
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-feature-settings: "liga" 0;
+  letter-spacing: -0.025em;
 }
 
 /* Custom scrollbar for the editor */
@@ -89,11 +99,11 @@
 }
 
 .editor-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full;
+  @apply bg-primary/20 rounded-full;
 }
 
 .editor-scrollbar::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted/80;
+  @apply bg-primary/40;
 }
 
 /* Code highlighting styles */
@@ -102,11 +112,11 @@
 }
 
 .code-line:hover {
-  @apply border-white/10 bg-white/5;
+  @apply border-primary/50 bg-primary/5;
 }
 
 .code-keyword {
-  @apply text-blue-400;
+  @apply text-purple-400;
 }
 
 .code-string {
@@ -122,5 +132,31 @@
 }
 
 .code-function {
-  @apply text-purple-400;
+  @apply text-blue-400;
+}
+
+/* Animations */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Transitions */
+.transition-height {
+  transition-property: height;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

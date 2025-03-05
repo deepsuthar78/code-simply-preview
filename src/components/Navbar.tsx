@@ -99,7 +99,7 @@ const Navbar: React.FC = () => {
             <Share2 size={18} className="hover:scale-110 transition-transform duration-300" />
           </Button>
           
-          <Button variant="outline" size="sm" className="rounded-md ml-2 px-4 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary transition-all duration-200" onClick={handleDeploy}>
+          <Button variant="outline" size="sm" className="rounded-md ml-2 px-4 bg-black/10 hover:bg-black/20 border-black/20 text-white transition-all duration-200" onClick={handleDeploy}>
             Deploy
           </Button>
         </div>

@@ -39,9 +39,9 @@ const ResizableHandle = ({
       </div>
     ) : (
       <div className="z-10 flex h-auto py-2 items-center justify-center resize-handle-arrow">
-        <div className="flex items-center bg-primary/30 backdrop-blur-sm rounded-full p-1">
-          <ChevronLeft size={12} className="text-primary-foreground/90" />
-          <ChevronRight size={12} className="text-primary-foreground/90" />
+        <div className="flex items-center bg-black/30 backdrop-blur-sm rounded-full p-1">
+          <ChevronLeft size={12} className="text-white/90" />
+          <ChevronRight size={12} className="text-white/90" />
         </div>
       </div>
     )}

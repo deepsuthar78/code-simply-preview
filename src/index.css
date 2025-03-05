@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,8 +14,8 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 262 83.3% 67.8%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
     
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -22,7 +23,7 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     
-    --accent: 262 83.3% 67.8%;
+    --accent: 0 0% 0%;
     --accent-foreground: 0 0% 98%;
     
     --destructive: 0 62.8% 30.6%;
@@ -32,13 +33,13 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
     
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 }
 
 @layer base {
   * {
-    @apply border-border selection:bg-primary/20 selection:text-white;
+    @apply border-border selection:bg-black/20 selection:text-white;
   }
   
   body {
@@ -73,7 +74,7 @@
   }
   
   .text-gradient-primary {
-    @apply bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent;
+    @apply bg-gradient-to-br from-black via-black/90 to-black/80 bg-clip-text text-transparent;
   }
 }
 
@@ -98,11 +99,11 @@
 }
 
 .editor-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 rounded-full;
+  @apply bg-black/20 rounded-full;
 }
 
 .editor-scrollbar::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/40;
+  @apply bg-black/40;
 }
 
 /* Code highlighting styles */
@@ -111,7 +112,7 @@
 }
 
 .code-line:hover {
-  @apply border-primary/50 bg-primary/5;
+  @apply border-black/50 bg-black/5;
 }
 
 .code-keyword {
@@ -169,7 +170,7 @@
 
 .resize-handle:hover, 
 .resize-handle[data-resize-handle-active] {
-  @apply bg-primary/60;
+  @apply bg-black/60;
   width: 4px;
 }
 
@@ -181,7 +182,7 @@
   transform: translate(-50%, -50%);
   width: 1px;
   height: 24px;
-  @apply bg-primary/60;
+  @apply bg-black/60;
   transition: opacity 0.2s ease;
 }
 
@@ -197,7 +198,7 @@
   justify-content: center;
   padding: 0.25rem;
   border-radius: 9999px;
-  @apply bg-primary/20 backdrop-blur-sm;
+  @apply bg-black/20 backdrop-blur-sm;
 }
 
 /* Dropdown menu styling for the model selector */

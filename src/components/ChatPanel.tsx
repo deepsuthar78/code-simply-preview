@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ const ChatPanel: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       isUser: false,
-      text: "I've created a modern dark UI code editor with a live preview panel, inspired by Lovable's interface but with its own identity. The design features a sleek dark theme with glass-morphism effects and smooth animations."
+      text: "I've created a modern dark UI code editor with a live preview panel. The design features a sleek black theme with glass-morphism effects and smooth animations."
     }
   ]);
   const [input, setInput] = useState('');
@@ -77,7 +78,7 @@ const ChatPanel: React.FC = () => {
           className={cn(
             "rounded-none border-b-2 flex-1 px-4 py-2 transition-all duration-200",
             activeTab === 'chat' 
-              ? "border-primary text-primary" 
+              ? "border-black text-white" 
               : "border-transparent text-muted-foreground"
           )}
           onClick={() => setActiveTab('chat')}
@@ -90,7 +91,7 @@ const ChatPanel: React.FC = () => {
           className={cn(
             "rounded-none border-b-2 flex-1 px-4 py-2 transition-all duration-200",
             activeTab === 'history' 
-              ? "border-primary text-primary" 
+              ? "border-black text-white" 
               : "border-transparent text-muted-foreground"
           )}
           onClick={() => setActiveTab('history')}
@@ -114,7 +115,7 @@ const ChatPanel: React.FC = () => {
               >
                 <div className={cn(
                   "flex-none h-8 w-8 rounded-full flex items-center justify-center",
-                  message.isUser ? "order-2 bg-primary/20" : "bg-secondary/50"
+                  message.isUser ? "order-2 bg-black/20" : "bg-secondary/50"
                 )}>
                   {message.isUser ? <User size={14} /> : <Bot size={14} />}
                 </div>
@@ -122,7 +123,7 @@ const ChatPanel: React.FC = () => {
                   className={cn(
                     "p-3 rounded-lg max-w-[85%] glass-morphism shadow-md",
                     message.isUser 
-                      ? "bg-primary/10 text-primary border-primary/20" 
+                      ? "bg-black/10 text-white border-black/20" 
                       : "bg-secondary/30 text-secondary-foreground border-secondary/30"
                   )}
                 >
@@ -157,13 +158,13 @@ const ChatPanel: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
-                className="bg-secondary/30 border-white/10 focus-visible:ring-primary/20 placeholder:text-white/30 transition-all duration-200"
+                className="bg-secondary/30 border-white/10 focus-visible:ring-black/20 placeholder:text-white/30 transition-all duration-200"
               />
               <Button 
                 size="icon" 
                 onClick={handleSend}
                 disabled={input.trim() === ''}
-                className="bg-primary/20 hover:bg-primary/30 text-primary transition-all duration-200"
+                className="bg-black/20 hover:bg-black/30 text-white transition-all duration-200"
               >
                 <Send size={18} />
               </Button>

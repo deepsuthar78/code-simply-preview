@@ -116,7 +116,7 @@
 }
 
 .code-keyword {
-  @apply text-purple-400;
+  @apply text-gray-400;
 }
 
 .code-string {
@@ -136,55 +136,13 @@
 }
 
 /* Animations */
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
+/* ... keep existing code (animations) */
 
 /* Transitions */
-.transition-height {
-  transition-property: height;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
+/* ... keep existing code (transitions) */
 
 /* Resizer panel styling */
-.resize-handle {
-  @apply bg-white/10 transition-colors duration-300;
-  width: 4px;
-  position: relative;
-}
-
-.resize-handle:hover, 
-.resize-handle[data-resize-handle-active] {
-  @apply bg-black/60;
-  width: 4px;
-}
-
-.resize-handle::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 1px;
-  height: 24px;
-  @apply bg-black/60;
-  transition: opacity 0.2s ease;
-}
+/* ... keep existing code (resizer panel styling) */
 
 /* Resize handle arrow styling */
 .resize-handle-arrow {

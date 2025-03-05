@@ -1,5 +1,5 @@
 
-import { GripVertical } from "lucide-react"
+import { GripVertical, ChevronLeft, ChevronRight } from "lucide-react"
 import * as ResizablePrimitive from "react-resizable-panels"
 
 import { cn } from "@/lib/utils"
@@ -33,9 +33,16 @@ const ResizableHandle = ({
     )}
     {...props}
   >
-    {withHandle && (
+    {withHandle ? (
       <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
         <GripVertical className="h-2.5 w-2.5" />
+      </div>
+    ) : (
+      <div className="z-10 flex h-auto py-2 items-center justify-center resize-handle-arrow">
+        <div className="flex items-center bg-primary/30 backdrop-blur-sm rounded-full p-1">
+          <ChevronLeft size={12} className="text-primary-foreground/90" />
+          <ChevronRight size={12} className="text-primary-foreground/90" />
+        </div>
       </div>
     )}
   </ResizablePrimitive.PanelResizeHandle>

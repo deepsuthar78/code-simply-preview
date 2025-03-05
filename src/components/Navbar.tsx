@@ -2,11 +2,17 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import AnimatedLogo from './AnimatedLogo';
-import { Code, Download, Settings, Share2, Github, Moon, Sun, Terminal } from 'lucide-react';
+import { Code, Download, Settings, Share2, Terminal, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar: React.FC = () => {
-  const [framework, setFramework] = useState<'react' | 'vue' | 'angular'>('react');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
   const { toast } = useToast();
   
   const handleDownload = () => {
@@ -37,37 +43,33 @@ const Navbar: React.FC = () => {
       </div>
 
       <div className="flex items-center space-x-3">
-        <div className="flex bg-secondary/70 rounded-lg p-1 backdrop-blur-sm border border-white/5">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`text-xs rounded-md flex items-center gap-1 transition-all duration-200 ${framework === 'react' ? 'bg-white/10' : 'hover:bg-white/5'}`}
-            onClick={() => setFramework('react')}
-          >
-            <Code size={14} />
-            <span>React</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`text-xs rounded-md flex items-center gap-1 transition-all duration-200 ${framework === 'vue' ? 'bg-white/10' : 'hover:bg-white/5'}`}
-            onClick={() => setFramework('vue')}
-          >
-            <Code size={14} />
-            <span>Vue</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`text-xs rounded-md flex items-center gap-1 transition-all duration-200 ${framework === 'angular' ? 'bg-white/10' : 'hover:bg-white/5'}`}
-            onClick={() => setFramework('angular')}
-          >
-            <Code size={14} />
-            <span>Angular</span>
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-md bg-secondary/70 border-white/5 text-white hover:bg-white/10 hover:text-white"
+            >
+              <Terminal size={14} className="mr-1.5" />
+              {selectedModel}
+              <ChevronDown size={14} className="ml-1.5 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-secondary/90 backdrop-blur-lg border-white/10 text-white">
+            <DropdownMenuItem 
+              onClick={() => setSelectedModel('gpt-4o-mini')}
+              className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+            >
+              gpt-4o-mini
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => setSelectedModel('gpt-4o')}
+              className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+            >
+              gpt-4o
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <div className="flex items-center space-x-2">
           <Button 

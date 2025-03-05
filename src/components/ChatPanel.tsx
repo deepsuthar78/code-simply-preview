@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, User, Bot, History, PlusCircle, ArrowRight } from 'lucide-react';
+import { Send, User, Bot, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -68,17 +67,6 @@ const ChatPanel: React.FC = () => {
       handleSend();
     }
   };
-  
-  const handleNewChat = () => {
-    setMessages([{
-      isUser: false,
-      text: "Started a new conversation. How can I help with your code today?"
-    }]);
-    toast({
-      title: "New Chat Started",
-      description: "Previous conversation has been saved to history.",
-    });
-  };
 
   return (
     <div className="flex flex-col h-full relative">
@@ -114,19 +102,6 @@ const ChatPanel: React.FC = () => {
       
       {activeTab === 'chat' ? (
         <>
-          {/* New chat button */}
-          <div className="p-2 border-b border-white/5">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full text-xs justify-start bg-white/5 hover:bg-white/10 border-white/10"
-              onClick={handleNewChat}
-            >
-              <PlusCircle size={14} className="mr-2" />
-              New Chat
-            </Button>
-          </div>
-      
           {/* Chat content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none bg-black/20">
             {messages.map((message, index) => (
@@ -202,9 +177,6 @@ const ChatPanel: React.FC = () => {
           <p className="text-sm text-white/50 text-center max-w-xs mb-4">
             Your previous conversations will appear here
           </p>
-          <Button variant="outline" size="sm" className="gap-2 border-white/10 hover:bg-white/10">
-            Start New Chat <ArrowRight size={14} />
-          </Button>
         </div>
       )}
     </div>

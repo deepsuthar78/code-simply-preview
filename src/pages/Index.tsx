@@ -7,7 +7,7 @@ import ChatPanel from '@/components/ChatPanel';
 import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Code, Eye } from 'lucide-react';
+import { Code, Eye, ChevronRight, ChevronLeft } from 'lucide-react';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -42,6 +42,7 @@ export default MyComponent;
 const Index = () => {
   const { code, setCode, compiledCode, error } = useCodeState({ initialCode });
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+  const [isHandleHovered, setIsHandleHovered] = useState(false);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -63,8 +64,21 @@ const Index = () => {
             <ChatPanel />
           </ResizablePanel>
           
-          {/* Improved resize handle with better visibility */}
-          <ResizableHandle className="resize-handle group hover:resize-handle-active" />
+          {/* Improved resize handle with better visibility and hover arrow */}
+          <ResizableHandle 
+            className={cn("resize-handle group", isHandleHovered ? "resize-handle-active" : "hover:resize-handle-active")}
+            onMouseEnter={() => setIsHandleHovered(true)}
+            onMouseLeave={() => setIsHandleHovered(false)}
+          >
+            {isHandleHovered && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 bg-primary/20 backdrop-blur-sm rounded-full p-1 transition-all duration-300 animate-pulse-subtle">
+                <div className="flex items-center">
+                  <ChevronLeft size={16} className="text-primary/80" />
+                  <ChevronRight size={16} className="text-primary/80" />
+                </div>
+              </div>
+            )}
+          </ResizableHandle>
           
           {/* Right Side - Preview/Code */}
           <ResizablePanel defaultSize={70} className="flex flex-col">

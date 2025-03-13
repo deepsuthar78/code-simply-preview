@@ -176,6 +176,15 @@
   @apply bg-black/20 backdrop-blur-sm;
 }
 
+/* File tree styling */
+.file-tree-item {
+  @apply flex items-center py-1 px-2 rounded-md cursor-pointer hover:bg-black/20;
+}
+
+.file-tree-item-active {
+  @apply bg-black/30 text-white;
+}
+
 /* Dropdown menu styling for the model selector */
 .model-dropdown {
   @apply bg-secondary/90 backdrop-blur-xl border border-white/10 rounded-md shadow-lg overflow-hidden;

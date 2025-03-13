@@ -4,10 +4,11 @@ import Navbar from '@/components/Navbar';
 import Editor from '@/components/Editor';
 import Preview from '@/components/Preview';
 import ChatPanel from '@/components/ChatPanel';
+import FileTreeSidebar, { FileItem } from '@/components/FileTreeSidebar';
 import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Code, Eye } from 'lucide-react';
+import { Code, Eye, FolderTree } from 'lucide-react';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -42,9 +43,23 @@ export default MyComponent;
 const Index = () => {
   const { code, setCode, compiledCode, error } = useCodeState({ initialCode });
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+  const [showFileSidebar, setShowFileSidebar] = useState(true);
+  const [selectedFileId, setSelectedFileId] = useState<string | undefined>(undefined);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
+  };
+
+  const handleFileSelect = (file: FileItem) => {
+    if (file.type === 'file') {
+      setSelectedFileId(file.id);
+      // In a real app, we would load the file content here
+      console.log(`Selected file: ${file.name}`);
+    }
+  };
+
+  const toggleFileSidebar = () => {
+    setShowFileSidebar(!showFileSidebar);
   };
 
   return (
@@ -68,57 +83,86 @@ const Index = () => {
             className="resize-handle"
           />
           
-          {/* Right Side - Preview/Code */}
+          {/* Middle - Code/Preview with File Explorer */}
           <ResizablePanel defaultSize={70} className="flex flex-col">
             {/* Tabs for Preview/Code */}
-            <div className="border-b border-white/10 flex glass-morphism backdrop-blur-lg">
+            <div className="border-b border-white/10 flex glass-morphism backdrop-blur-lg justify-between">
+              <div className="flex">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
+                    activeTab === 'preview' 
+                      ? "border-black text-white" 
+                      : "border-transparent text-muted-foreground"
+                  )}
+                  onClick={() => setActiveTab('preview')}
+                >
+                  <Eye size={16} className="mr-2" />
+                  Preview
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
+                    activeTab === 'code' 
+                      ? "border-black text-white" 
+                      : "border-transparent text-muted-foreground"
+                  )}
+                  onClick={() => setActiveTab('code')}
+                >
+                  <Code size={16} className="mr-2" />
+                  Code
+                </Button>
+              </div>
               <Button
                 variant="ghost"
-                className={cn(
-                  "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
-                  activeTab === 'preview' 
-                    ? "border-black text-white" 
-                    : "border-transparent text-muted-foreground"
-                )}
-                onClick={() => setActiveTab('preview')}
+                className="rounded-none px-4 py-2"
+                onClick={toggleFileSidebar}
               >
-                <Eye size={16} className="mr-2" />
-                Preview
-              </Button>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
-                  activeTab === 'code' 
-                    ? "border-black text-white" 
-                    : "border-transparent text-muted-foreground"
-                )}
-                onClick={() => setActiveTab('code')}
-              >
-                <Code size={16} className="mr-2" />
-                Code
+                <FolderTree size={16} />
               </Button>
             </div>
             
-            {/* Content area */}
-            <div className="flex-1 overflow-hidden backdrop-blur-sm">
-              <div className={cn(
-                "w-full h-full transition-all duration-300 ease-in-out",
-                activeTab === 'preview' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute'
-              )}>
-                {activeTab === 'preview' && (
-                  <Preview code={compiledCode} error={error} className="h-full" />
-                )}
-              </div>
+            {/* Content area with file explorer */}
+            <div className="flex-1 overflow-hidden backdrop-blur-sm flex">
+              {/* File Tree Sidebar */}
+              {showFileSidebar && (
+                <ResizablePanel 
+                  defaultSize={20} 
+                  minSize={15}
+                  maxSize={30}
+                  className="h-full"
+                >
+                  <FileTreeSidebar 
+                    onFileSelect={handleFileSelect}
+                    selectedFileId={selectedFileId}
+                    className="h-full"
+                  />
+                </ResizablePanel>
+              )}
               
-              <div className={cn(
-                "w-full h-full transition-all duration-300 ease-in-out",
-                activeTab === 'code' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full absolute'
-              )}>
-                {activeTab === 'code' && (
-                  <Editor onCodeChange={handleCodeChange} initialCode={code} className="h-full" />
-                )}
-              </div>
+              {showFileSidebar && <ResizableHandle />}
+              
+              <ResizablePanel defaultSize={showFileSidebar ? 80 : 100} className="h-full">
+                <div className={cn(
+                  "w-full h-full transition-all duration-300 ease-in-out",
+                  activeTab === 'preview' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute'
+                )}>
+                  {activeTab === 'preview' && (
+                    <Preview code={compiledCode} error={error} className="h-full" />
+                  )}
+                </div>
+                
+                <div className={cn(
+                  "w-full h-full transition-all duration-300 ease-in-out",
+                  activeTab === 'code' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full absolute'
+                )}>
+                  {activeTab === 'code' && (
+                    <Editor onCodeChange={handleCodeChange} initialCode={code} className="h-full" />
+                  )}
+                </div>
+              </ResizablePanel>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

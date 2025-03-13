@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import AnimatedLogo from './AnimatedLogo';
-import { Code, Download, Settings, Share2, Terminal, ChevronDown } from 'lucide-react';
+import { Download, Share2, Terminal, ChevronDown } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import SettingsDialog from './SettingsDialog';
 
 const Navbar: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
@@ -72,14 +73,7 @@ const Navbar: React.FC = () => {
         </DropdownMenu>
 
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="rounded-full hover:bg-white/10 transition-all duration-200"
-            onClick={() => toast({ title: "Settings", description: "Settings panel will open here." })}
-          >
-            <Settings size={18} className="hover:rotate-90 transition-transform duration-300" />
-          </Button>
+          <SettingsDialog />
           
           <Button 
             variant="ghost" 

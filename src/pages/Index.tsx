@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Editor from '@/components/Editor';
@@ -53,7 +52,6 @@ const Index = () => {
   const handleFileSelect = (file: FileItem) => {
     if (file.type === 'file') {
       setSelectedFileId(file.id);
-      // In a real app, we would load the file content here
       console.log(`Selected file: ${file.name}`);
     }
   };
@@ -126,45 +124,39 @@ const Index = () => {
               )}
             </div>
             
-            {/* Content area with file explorer */}
-            <div className="flex-1 overflow-hidden backdrop-blur-sm flex">
-              {/* File Tree Sidebar - Only show when activeTab is 'code' */}
-              {activeTab === 'code' && showFileSidebar && (
-                <ResizablePanel 
-                  defaultSize={20} 
-                  minSize={15}
-                  maxSize={30}
-                  className="h-full"
-                >
-                  <FileTreeSidebar 
-                    onFileSelect={handleFileSelect}
-                    selectedFileId={selectedFileId}
-                    className="h-full"
-                  />
-                </ResizablePanel>
+            {/* Content area with code editor or preview */}
+            <div className="flex-1 overflow-hidden backdrop-blur-sm">
+              {/* Show preview tab content */}
+              {activeTab === 'preview' && (
+                <div className="w-full h-full">
+                  <Preview code={compiledCode} error={error} className="h-full" />
+                </div>
               )}
               
-              {activeTab === 'code' && showFileSidebar && <ResizableHandle />}
-              
-              <ResizablePanel defaultSize={activeTab === 'code' && showFileSidebar ? 80 : 100} className="h-full">
-                <div className={cn(
-                  "w-full h-full transition-all duration-300 ease-in-out",
-                  activeTab === 'preview' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute'
-                )}>
-                  {activeTab === 'preview' && (
-                    <Preview code={compiledCode} error={error} className="h-full" />
+              {/* Show code editor tab content with optional file explorer */}
+              {activeTab === 'code' && (
+                <ResizablePanelGroup direction="horizontal" className="h-full">
+                  {showFileSidebar && (
+                    <ResizablePanel 
+                      defaultSize={20} 
+                      minSize={15}
+                      maxSize={30}
+                    >
+                      <FileTreeSidebar 
+                        onFileSelect={handleFileSelect}
+                        selectedFileId={selectedFileId}
+                        className="h-full"
+                      />
+                    </ResizablePanel>
                   )}
-                </div>
-                
-                <div className={cn(
-                  "w-full h-full transition-all duration-300 ease-in-out",
-                  activeTab === 'code' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full absolute'
-                )}>
-                  {activeTab === 'code' && (
+                  
+                  {showFileSidebar && <ResizableHandle />}
+                  
+                  <ResizablePanel defaultSize={80}>
                     <Editor onCodeChange={handleCodeChange} initialCode={code} className="h-full" />
-                  )}
-                </div>
-              </ResizablePanel>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              )}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

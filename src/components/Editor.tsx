@@ -2,11 +2,19 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
+import { File } from 'lucide-react';
 
 interface EditorProps {
   className?: string;
   onCodeChange?: (code: string) => void;
   initialCode?: string;
+}
+
+interface CodeFile {
+  id: string;
+  name: string;
+  content: string;
+  language: string;
 }
 
 const Editor: React.FC<EditorProps> = ({
@@ -18,6 +26,38 @@ const Editor: React.FC<EditorProps> = ({
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const [activeLineNumber, setActiveLineNumber] = useState<number>(1);
+  
+  // Demo files for demonstration
+  const [files, setFiles] = useState<CodeFile[]>([
+    { id: '1', name: 'App.tsx', content: code, language: 'tsx' },
+    { id: '2', name: 'styles.css', content: '/* CSS styles here */', language: 'css' },
+    { id: '3', name: 'utils.ts', content: '// Utility functions', language: 'ts' },
+  ]);
+  
+  const [activeFileId, setActiveFileId] = useState<string>('1');
+  
+  // Update active file when switching tabs
+  const handleFileChange = (fileId: string) => {
+    // Save current file content before switching
+    const updatedFiles = files.map(file => {
+      if (file.id === activeFileId) {
+        return { ...file, content: code };
+      }
+      return file;
+    });
+    
+    setFiles(updatedFiles);
+    setActiveFileId(fileId);
+    
+    // Update editor with new file content
+    const newActiveFile = updatedFiles.find(file => file.id === fileId);
+    if (newActiveFile) {
+      setCode(newActiveFile.content);
+      if (onCodeChange) {
+        onCodeChange(newActiveFile.content);
+      }
+    }
+  };
 
   // Update line numbers when code changes
   useEffect(() => {
@@ -52,6 +92,17 @@ const Editor: React.FC<EditorProps> = ({
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newCode = e.target.value;
     setCode(newCode);
+    
+    // Update the current file's content
+    const updatedFiles = files.map(file => {
+      if (file.id === activeFileId) {
+        return { ...file, content: newCode };
+      }
+      return file;
+    });
+    
+    setFiles(updatedFiles);
+    
     if (onCodeChange) {
       onCodeChange(newCode);
     }
@@ -89,6 +140,25 @@ const Editor: React.FC<EditorProps> = ({
 
   return (
     <div className={cn("w-full h-full flex flex-col glass-morphism bg-black/30", className)}>
+      {/* File tabs */}
+      <div className="flex border-b border-white/10 bg-black/20 overflow-x-auto scrollbar-none">
+        {files.map(file => (
+          <button
+            key={file.id}
+            onClick={() => handleFileChange(file.id)}
+            className={cn(
+              "px-4 py-2 text-sm flex items-center gap-2 border-r border-white/5 transition-colors",
+              activeFileId === file.id 
+                ? "bg-black/30 text-white" 
+                : "text-white/50 hover:text-white/80 hover:bg-black/10"
+            )}
+          >
+            <File size={14} />
+            {file.name}
+          </button>
+        ))}
+      </div>
+      
       <div className="flex-1 overflow-hidden flex">
         <div 
           ref={lineNumbersRef} 

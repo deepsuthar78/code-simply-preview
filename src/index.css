@@ -106,6 +106,23 @@
   @apply bg-black/40;
 }
 
+/* File tab styling */
+.file-tabs {
+  @apply flex border-b border-white/10 bg-black/20 overflow-x-auto;
+}
+
+.file-tab {
+  @apply px-4 py-2 text-sm flex items-center gap-2 border-r border-white/5 transition-colors;
+}
+
+.file-tab-active {
+  @apply bg-black/30 text-white;
+}
+
+.file-tab-inactive {
+  @apply text-white/50 hover:text-white/80 hover:bg-black/10;
+}
+
 /* Code highlighting styles */
 .code-line {
   @apply px-4 py-0.5 border-l-2 border-transparent transition-colors;
@@ -153,7 +170,7 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-center;
   padding: 0.25rem;
   border-radius: 9999px;
   @apply bg-black/20 backdrop-blur-sm;

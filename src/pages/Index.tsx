@@ -115,19 +115,21 @@ const Index = () => {
                   Code
                 </Button>
               </div>
-              <Button
-                variant="ghost"
-                className="rounded-none px-4 py-2"
-                onClick={toggleFileSidebar}
-              >
-                <FolderTree size={16} />
-              </Button>
+              {activeTab === 'code' && (
+                <Button
+                  variant="ghost"
+                  className="rounded-none px-4 py-2"
+                  onClick={toggleFileSidebar}
+                >
+                  <FolderTree size={16} />
+                </Button>
+              )}
             </div>
             
             {/* Content area with file explorer */}
             <div className="flex-1 overflow-hidden backdrop-blur-sm flex">
-              {/* File Tree Sidebar */}
-              {showFileSidebar && (
+              {/* File Tree Sidebar - Only show when activeTab is 'code' */}
+              {activeTab === 'code' && showFileSidebar && (
                 <ResizablePanel 
                   defaultSize={20} 
                   minSize={15}
@@ -142,9 +144,9 @@ const Index = () => {
                 </ResizablePanel>
               )}
               
-              {showFileSidebar && <ResizableHandle />}
+              {activeTab === 'code' && showFileSidebar && <ResizableHandle />}
               
-              <ResizablePanel defaultSize={showFileSidebar ? 80 : 100} className="h-full">
+              <ResizablePanel defaultSize={activeTab === 'code' && showFileSidebar ? 80 : 100} className="h-full">
                 <div className={cn(
                   "w-full h-full transition-all duration-300 ease-in-out",
                   activeTab === 'preview' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute'

@@ -1,8 +1,5 @@
 
-import { useToast } from "@/hooks/use-toast";
-
-// API key is used for Gemini API
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 export interface AIMessage {
   role: 'user' | 'assistant';
@@ -22,73 +19,74 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
     if (!apiKey) {
       throw new Error("API key is required. Please add your API key in the settings.");
     }
-    
-    // Format messages for Gemini API
-    const formattedMessages = messages.map(msg => ({
-      role: msg.role,
-      parts: [{ text: msg.content }]
-    }));
-    
-    // Add system prompt if provided
-    if (systemPrompt) {
-      formattedMessages.unshift({
-        role: 'user',
-        parts: [{ text: `System: ${systemPrompt}` }]
-      });
-    }
 
-    console.log("Sending request to Gemini API with key:", apiKey.substring(0, 5) + "...");
+    console.log("Initializing Gemini API with key:", apiKey.substring(0, 5) + "...");
     
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: formattedMessages,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
+    // Initialize the Google Generative AI with the provided API key
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Get the model (gemini-2.0-flash)
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      }),
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("AI API Error:", errorData);
-      throw new Error(errorData.error?.message || "Failed to get AI response");
+    // Start a chat session
+    const chat = model.startChat();
+
+    // Format the history from previous messages
+    for (let i = 0; i < messages.length - 1; i++) {
+      const msg = messages[i];
+      if (msg.role === 'user') {
+        await chat.sendMessage(msg.content);
+      }
     }
 
-    const data = await response.json();
-    console.log("Gemini API Response:", data);
+    // If there's a system prompt, send it first
+    if (systemPrompt) {
+      console.log("Sending system prompt:", systemPrompt);
+      const systemResult = await model.generateContent(`System: ${systemPrompt}`);
+      console.log("System prompt response:", systemResult.response.text());
+    }
+
+    // Get the current user message (last one in the array)
+    const currentMessage = messages[messages.length - 1];
+    console.log("Sending message to Gemini:", currentMessage.content);
+
+    // Send the message and get the response
+    const result = await chat.sendMessage(currentMessage.content);
+    const responseText = result.response.text();
     
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    console.log("Received response from Gemini:", responseText.substring(0, 100) + "...");
     
-    if (!aiResponse) {
+    if (!responseText) {
       throw new Error("No response from AI");
     }
 
-    return aiResponse;
+    return responseText;
   } catch (error) {
     console.error("Error generating AI response:", error);
     throw error;

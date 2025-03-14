@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import AnimatedLogo from './AnimatedLogo';
 import { Download, Share2, Terminal, ChevronDown } from 'lucide-react';
@@ -12,9 +12,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import SettingsDialog from './SettingsDialog';
 
+// Define provider models
+const PROVIDER_MODELS = {
+  openai: ['gpt-4', 'gpt-4o', 'gpt-4o-mini'],
+  anthropic: ['claude-3.5-sonnet', 'claude-3.7-sonnet', 'claude-3.7-thinking'],
+  gemini: ['gemini-2.0-flash', 'gemini-2.0-thinking']
+};
+
 const Navbar: React.FC = () => {
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedProvider, setSelectedProvider] = useState<string>('openai');
+  const [availableModels, setAvailableModels] = useState<string[]>(PROVIDER_MODELS.openai);
+  const [selectedModel, setSelectedModel] = useState<string>(PROVIDER_MODELS.openai[1]); // Default to gpt-4o
   const { toast } = useToast();
+  
+  // Listen for provider changes from the settings dialog
+  useEffect(() => {
+    const handleProviderChange = (event: CustomEvent) => {
+      const { provider, models } = event.detail;
+      setSelectedProvider(provider);
+      setAvailableModels(models);
+      setSelectedModel(models[0]); // Select the first model by default
+    };
+
+    window.addEventListener('providerChanged', handleProviderChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('providerChanged', handleProviderChange as EventListener);
+    };
+  }, []);
   
   const handleDownload = () => {
     toast({
@@ -37,6 +62,16 @@ const Navbar: React.FC = () => {
     });
   };
 
+  // Get provider name for display
+  const getProviderDisplay = () => {
+    switch(selectedProvider) {
+      case 'openai': return 'OpenAI';
+      case 'anthropic': return 'Anthropic';
+      case 'gemini': return 'Gemini';
+      default: return 'AI';
+    }
+  };
+
   return (
     <nav className="w-full px-6 py-3 glass-morphism border-b border-white/10 flex items-center justify-between sticky top-0 z-20">
       <div className="flex items-center">
@@ -52,23 +87,20 @@ const Navbar: React.FC = () => {
               className="rounded-md bg-secondary/70 border-white/5 text-white hover:bg-white/10 hover:text-white"
             >
               <Terminal size={14} className="mr-1.5" />
-              {selectedModel}
+              {getProviderDisplay()}: {selectedModel}
               <ChevronDown size={14} className="ml-1.5 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-secondary/90 backdrop-blur-lg border-white/10 text-white">
-            <DropdownMenuItem 
-              onClick={() => setSelectedModel('gpt-4o-mini')}
-              className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-            >
-              gpt-4o-mini
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setSelectedModel('gpt-4o')}
-              className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-            >
-              gpt-4o
-            </DropdownMenuItem>
+            {availableModels.map(model => (
+              <DropdownMenuItem 
+                key={model}
+                onClick={() => setSelectedModel(model)}
+                className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+              >
+                {model}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
 

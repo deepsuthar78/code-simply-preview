@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import {
   Dialog,
@@ -28,6 +28,17 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
+// Define provider types and their models
+interface ProviderModels {
+  [key: string]: string[];
+}
+
+const PROVIDER_MODELS: ProviderModels = {
+  openai: ['gpt-4', 'gpt-4o', 'gpt-4o-mini'],
+  anthropic: ['claude-3.5-sonnet', 'claude-3.7-sonnet', 'claude-3.7-thinking'],
+  gemini: ['gemini-2.0-flash', 'gemini-2.0-thinking']
+};
+
 const SettingsDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [provider, setProvider] = useState<string>('openai');
@@ -35,6 +46,22 @@ const SettingsDialog: React.FC = () => {
   const [theme, setTheme] = useState<string>('dark');
   const [systemPrompt, setSystemPrompt] = useState<string>('');
   const { toast } = useToast();
+
+  // Pass the selected provider and its models to the parent component
+  const handleProviderChange = (value: string) => {
+    setProvider(value);
+    
+    // Here we would normally dispatch an event or call a callback
+    // to update the model selection in the Navbar component
+    // For demonstration, we'll emit a custom event
+    const event = new CustomEvent('providerChanged', { 
+      detail: { 
+        provider: value, 
+        models: PROVIDER_MODELS[value] 
+      } 
+    });
+    window.dispatchEvent(event);
+  };
 
   const handleSave = () => {
     toast({
@@ -55,7 +82,7 @@ const SettingsDialog: React.FC = () => {
           <Settings size={18} className="hover:rotate-90 transition-transform duration-300" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] backdrop-blur-xl bg-background/95 border-white/10">
+      <DialogContent className="sm:max-w-[450px] backdrop-blur-xl bg-background/95 border-white/10">
         <DialogHeader>
           <DialogTitle className="text-xl">Settings</DialogTitle>
           <DialogDescription>
@@ -65,20 +92,19 @@ const SettingsDialog: React.FC = () => {
 
         <div className="grid gap-4 py-4">
           <Tabs defaultValue="provider" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-4">
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="provider">Provider</TabsTrigger>
               <TabsTrigger value="apikey">API Key</TabsTrigger>
-              <TabsTrigger value="theme">Theme</TabsTrigger>
-              <TabsTrigger value="prompt">System Prompt</TabsTrigger>
+              <TabsTrigger value="theme">Theme & Prompt</TabsTrigger>
             </TabsList>
             
             {/* Provider Selection Tab */}
             <TabsContent value="provider" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="provider">Select Provider</Label>
+                <Label htmlFor="provider">Select AI Provider</Label>
                 <Select 
                   value={provider} 
-                  onValueChange={(value) => setProvider(value)}
+                  onValueChange={handleProviderChange}
                 >
                   <SelectTrigger id="provider">
                     <SelectValue placeholder="Select a provider" />
@@ -89,60 +115,23 @@ const SettingsDialog: React.FC = () => {
                     <SelectItem value="gemini">Gemini</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="model">Select Model</Label>
-                {provider === 'openai' && (
-                  <Select>
-                    <SelectTrigger id="model">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
-                      <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                      <SelectItem value="gpt-4o-mini">GPT-4o-mini</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {provider === 'anthropic' && (
-                  <Select>
-                    <SelectTrigger id="model">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="claude-3.5-sonnet">Claude 3.5 Sonnet</SelectItem>
-                      <SelectItem value="claude-3.7-sonnet">Claude 3.7 Sonnet</SelectItem>
-                      <SelectItem value="claude-3.7-thinking">Claude 3.7 Sonnet Thinking</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {provider === 'gemini' && (
-                  <Select>
-                    <SelectTrigger id="model">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash</SelectItem>
-                      <SelectItem value="gemini-2.0-thinking">Gemini 2.0 Thinking Experimental</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Available models will be shown in the main interface dropdown.
+                </p>
               </div>
             </TabsContent>
             
             {/* API Key Tab */}
             <TabsContent value="apikey" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="apikey">API Key</Label>
+                <Label htmlFor="apikey">API Key for {provider.charAt(0).toUpperCase() + provider.slice(1)}</Label>
                 <Input
                   id="apikey"
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="Enter your API key"
+                  className="border-white/10 bg-white/5"
                 />
                 <p className="text-xs text-muted-foreground">
                   Your API key is stored locally and never sent to our servers.
@@ -150,12 +139,12 @@ const SettingsDialog: React.FC = () => {
               </div>
             </TabsContent>
             
-            {/* Theme Tab */}
-            <TabsContent value="theme" className="space-y-4">
+            {/* Theme and System Prompt Tab */}
+            <TabsContent value="theme" className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="theme">Theme</Label>
                 <Select value={theme} onValueChange={(value) => setTheme(value)}>
-                  <SelectTrigger id="theme">
+                  <SelectTrigger id="theme" className="border-white/10 bg-white/5">
                     <SelectValue placeholder="Select a theme" />
                   </SelectTrigger>
                   <SelectContent>
@@ -165,10 +154,7 @@ const SettingsDialog: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </TabsContent>
-            
-            {/* System Prompt Tab */}
-            <TabsContent value="prompt" className="space-y-4">
+              
               <div className="space-y-2">
                 <Label htmlFor="systemprompt">System Prompt</Label>
                 <Textarea
@@ -176,10 +162,10 @@ const SettingsDialog: React.FC = () => {
                   value={systemPrompt}
                   onChange={(e) => setSystemPrompt(e.target.value)}
                   placeholder="Enter a system prompt to guide the AI behavior"
-                  className="min-h-[150px]"
+                  className="min-h-[150px] border-white/10 bg-white/5"
                 />
                 <p className="text-xs text-muted-foreground">
-                  The system prompt helps define how the AI responds to your prompts.
+                  The system prompt helps define how the AI responds to your questions.
                 </p>
               </div>
             </TabsContent>

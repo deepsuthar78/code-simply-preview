@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import SettingsDialog from './SettingsDialog';
+import { useAI } from '@/contexts/AIContext';
 
 // Define provider models
 const PROVIDER_MODELS = {
@@ -20,18 +21,22 @@ const PROVIDER_MODELS = {
 };
 
 const Navbar: React.FC = () => {
-  const [selectedProvider, setSelectedProvider] = useState<string>('openai');
-  const [availableModels, setAvailableModels] = useState<string[]>(PROVIDER_MODELS.openai);
-  const [selectedModel, setSelectedModel] = useState<string>(PROVIDER_MODELS.openai[1]); // Default to gpt-4o
+  const [availableModels, setAvailableModels] = useState<string[]>(PROVIDER_MODELS.gemini);
   const { toast } = useToast();
+  const { provider, model, setModel } = useAI();
+  
+  // Update available models when provider changes
+  useEffect(() => {
+    if (provider && PROVIDER_MODELS[provider]) {
+      setAvailableModels(PROVIDER_MODELS[provider]);
+    }
+  }, [provider]);
   
   // Listen for provider changes from the settings dialog
   useEffect(() => {
     const handleProviderChange = (event: CustomEvent) => {
       const { provider, models } = event.detail;
-      setSelectedProvider(provider);
       setAvailableModels(models);
-      setSelectedModel(models[0]); // Select the first model by default
     };
 
     window.addEventListener('providerChanged', handleProviderChange as EventListener);
@@ -64,7 +69,7 @@ const Navbar: React.FC = () => {
 
   // Get provider name for display
   const getProviderDisplay = () => {
-    switch(selectedProvider) {
+    switch(provider) {
       case 'openai': return 'OpenAI';
       case 'anthropic': return 'Anthropic';
       case 'gemini': return 'Gemini';
@@ -87,18 +92,18 @@ const Navbar: React.FC = () => {
               className="rounded-md bg-secondary/70 border-white/5 text-white hover:bg-white/10 hover:text-white"
             >
               <Terminal size={14} className="mr-1.5" />
-              {getProviderDisplay()}: {selectedModel}
+              {getProviderDisplay()}: {model}
               <ChevronDown size={14} className="ml-1.5 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-secondary/90 backdrop-blur-lg border-white/10 text-white">
-            {availableModels.map(model => (
+            {availableModels.map(modelOption => (
               <DropdownMenuItem 
-                key={model}
-                onClick={() => setSelectedModel(model)}
+                key={modelOption}
+                onClick={() => setModel(modelOption)}
                 className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
               >
-                {model}
+                {modelOption}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

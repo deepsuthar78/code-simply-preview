@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAI } from '@/contexts/AIContext';
 
 // Define provider types and their models
 interface ProviderModels {
@@ -41,19 +42,28 @@ const PROVIDER_MODELS: ProviderModels = {
 
 const SettingsDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [provider, setProvider] = useState<string>('openai');
-  const [apiKey, setApiKey] = useState<string>('');
   const [theme, setTheme] = useState<string>('dark');
-  const [systemPrompt, setSystemPrompt] = useState<string>('');
   const { toast } = useToast();
+  const { 
+    provider, 
+    setProvider, 
+    model, 
+    setModel, 
+    systemPrompt, 
+    setSystemPrompt, 
+    apiKey, 
+    setApiKey 
+  } = useAI();
 
   // Pass the selected provider and its models to the parent component
   const handleProviderChange = (value: string) => {
     setProvider(value);
     
+    // Set the first model of the selected provider as default
+    setModel(PROVIDER_MODELS[value][0]);
+    
     // Here we would normally dispatch an event or call a callback
     // to update the model selection in the Navbar component
-    // For demonstration, we'll emit a custom event
     const event = new CustomEvent('providerChanged', { 
       detail: { 
         provider: value, 

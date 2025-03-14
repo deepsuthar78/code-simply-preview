@@ -2,26 +2,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, User, Bot, History } from 'lucide-react';
+import { Send, User, Bot, History, Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAI } from '@/contexts/AIContext';
 import { useToast } from '@/hooks/use-toast';
-
-interface Message {
-  text: string;
-  isUser: boolean;
-}
+import { useCodeState } from '@/hooks/useCodeState';
+import { extractCodeFromAIResponse } from '@/services/aiService';
 
 const ChatPanel: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      isUser: false,
-      text: "I've created a modern dark UI code editor with a live preview panel. The design features a sleek black theme with glass-morphism effects and smooth animations."
-    }
-  ]);
+  const { messages, isLoading, sendMessage, clearMessages } = useAI();
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { setCode } = useCodeState();
   const { toast } = useToast();
   
   // Scroll to bottom when messages change
@@ -31,35 +24,30 @@ const ChatPanel: React.FC = () => {
     }
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() === '') return;
     
-    // Add user message
-    setMessages([...messages, { text: input, isUser: true }]);
-    
-    // Show typing indicator
-    setIsTyping(true);
-    
-    // Simulate AI response
-    setTimeout(() => {
-      setIsTyping(false);
-      setMessages(prev => [
-        ...prev, 
-        { 
-          text: "I've processed your request. You can see the updated preview on the right side panel.",
-          isUser: false 
-        }
-      ]);
-      
-      // Show toast notification
-      toast({
-        title: "Code Updated",
-        description: "Your changes have been applied to the preview.",
-        duration: 3000,
-      });
-    }, 1500);
-    
+    const userInput = input;
     setInput('');
+    
+    try {
+      // Send message to AI and get response
+      const response = await sendMessage(userInput);
+      
+      // Check if response contains code and update the editor if it does
+      const extractedCode = extractCodeFromAIResponse(response);
+      if (extractedCode) {
+        setCode(extractedCode);
+        
+        toast({
+          title: "Code Generated",
+          description: "The generated code has been applied to the editor.",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -105,34 +93,42 @@ const ChatPanel: React.FC = () => {
         <>
           {/* Chat content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none bg-black/20">
+            {messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                <Bot size={32} className="mb-4 opacity-50" />
+                <h3 className="text-lg font-medium text-white/80 mb-2">How can I help you today?</h3>
+                <p className="text-sm text-white/50 mb-6">Ask me to write code or help with your project</p>
+              </div>
+            )}
+            
             {messages.map((message, index) => (
               <div
                 key={index}
                 className={cn(
                   "flex items-start gap-3 transition-all duration-200 animate-fade-in",
-                  message.isUser ? "justify-end" : "justify-start"
+                  message.role === 'user' ? "justify-end" : "justify-start"
                 )}
               >
                 <div className={cn(
                   "flex-none h-8 w-8 rounded-full flex items-center justify-center",
-                  message.isUser ? "order-2 bg-black/20" : "bg-secondary/50"
+                  message.role === 'user' ? "order-2 bg-black/20" : "bg-secondary/50"
                 )}>
-                  {message.isUser ? <User size={14} /> : <Bot size={14} />}
+                  {message.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                 </div>
                 <div
                   className={cn(
                     "p-3 rounded-lg max-w-[85%] glass-morphism shadow-md",
-                    message.isUser 
+                    message.role === 'user' 
                       ? "bg-black/10 text-white border-black/20" 
                       : "bg-secondary/30 text-secondary-foreground border-secondary/30"
                   )}
                 >
-                  <p className="text-sm leading-relaxed">{message.text}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
                 </div>
               </div>
             ))}
             
-            {isTyping && (
+            {isLoading && (
               <div className="flex items-start gap-3 animate-fade-in">
                 <div className="flex-none h-8 w-8 rounded-full flex items-center justify-center bg-secondary/50">
                   <Bot size={14} />
@@ -153,17 +149,26 @@ const ChatPanel: React.FC = () => {
           {/* Input area */}
           <div className="p-4 border-t border-white/10 backdrop-blur-sm">
             <div className="flex gap-2">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={clearMessages}
+                title="Clear conversation"
+                className="text-white/50 hover:text-white hover:bg-white/10"
+              >
+                <Trash size={16} />
+              </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a message..."
+                placeholder="Generate code or ask for help..."
                 className="bg-secondary/30 border-white/10 focus-visible:ring-black/20 placeholder:text-white/30 transition-all duration-200"
               />
               <Button 
                 size="icon" 
                 onClick={handleSend}
-                disabled={input.trim() === ''}
+                disabled={input.trim() === '' || isLoading}
                 className="bg-black/20 hover:bg-black/30 text-white transition-all duration-200"
               >
                 <Send size={18} />

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, User, Bot, History, Trash } from 'lucide-react';
+import { Send, User, Bot, History, Trash, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAI } from '@/contexts/AIContext';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +10,7 @@ import { useCodeState } from '@/hooks/useCodeState';
 import { extractCodeFromAIResponse } from '@/services/aiService';
 
 const ChatPanel: React.FC = () => {
-  const { messages, isLoading, sendMessage, clearMessages } = useAI();
+  const { messages, isLoading, sendMessage, clearMessages, isApiConfigured } = useAI();
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -26,6 +26,14 @@ const ChatPanel: React.FC = () => {
 
   const handleSend = async () => {
     if (input.trim() === '') return;
+    if (!isApiConfigured) {
+      toast({
+        title: "API Not Configured",
+        description: "Please configure your API key in settings first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const userInput = input;
     setInput('');
@@ -58,7 +66,7 @@ const ChatPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative overflow-hidden">
       {/* Tabs */}
       <div className="border-b border-white/10 flex backdrop-blur-sm sticky top-0 z-10">
         <Button
@@ -91,6 +99,14 @@ const ChatPanel: React.FC = () => {
       
       {activeTab === 'chat' ? (
         <>
+          {/* API not configured warning */}
+          {!isApiConfigured && (
+            <div className="m-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md text-yellow-300 text-sm flex items-center gap-2 animate-pulse-subtle">
+              <AlertCircle size={16} />
+              <span>API key not configured. Please check settings.</span>
+            </div>
+          )}
+          
           {/* Chat content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none bg-black/20">
             {messages.length === 0 && (
@@ -162,13 +178,16 @@ const ChatPanel: React.FC = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Generate code or ask for help..."
+                placeholder={isApiConfigured 
+                  ? "Generate code or ask for help..." 
+                  : "Configure API key in settings first"}
                 className="bg-secondary/30 border-white/10 focus-visible:ring-black/20 placeholder:text-white/30 transition-all duration-200"
+                disabled={!isApiConfigured || isLoading}
               />
               <Button 
                 size="icon" 
                 onClick={handleSend}
-                disabled={input.trim() === '' || isLoading}
+                disabled={input.trim() === '' || isLoading || !isApiConfigured}
                 className="bg-black/20 hover:bg-black/30 text-white transition-all duration-200"
               >
                 <Send size={18} />

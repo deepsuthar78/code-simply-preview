@@ -88,6 +88,7 @@ const SettingsDialog: React.FC = () => {
           variant="ghost" 
           size="icon" 
           className="rounded-full hover:bg-white/10 transition-all duration-200"
+          data-settings-trigger="true"
         >
           <Settings size={18} className="hover:rotate-90 transition-transform duration-300" />
         </Button>
@@ -101,7 +102,7 @@ const SettingsDialog: React.FC = () => {
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <Tabs defaultValue="provider" className="w-full">
+          <Tabs defaultValue="apikey" className="w-full">
             <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="provider">Provider</TabsTrigger>
               <TabsTrigger value="apikey">API Key</TabsTrigger>
@@ -131,7 +132,7 @@ const SettingsDialog: React.FC = () => {
               </div>
             </TabsContent>
             
-            {/* API Key Tab */}
+            {/* API Key Tab - Set as default tab */}
             <TabsContent value="apikey" className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="apikey">API Key for {provider.charAt(0).toUpperCase() + provider.slice(1)}</Label>

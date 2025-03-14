@@ -55,29 +55,24 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
     });
 
     // Start a chat session
-    const chat = model.startChat();
+    const chat = model.startChat({
+      history: messages.slice(0, -1).map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.content }]
+      })),
+    });
 
-    // Format the history from previous messages
-    for (let i = 0; i < messages.length - 1; i++) {
-      const msg = messages[i];
-      if (msg.role === 'user') {
-        await chat.sendMessage(msg.content);
-      }
+    // If there's a system prompt, prepend it to the user message
+    let userMessage = messages[messages.length - 1].content;
+    if (systemPrompt && messages.length === 1) {
+      userMessage = `${systemPrompt}\n\n${userMessage}`;
+      console.log("Adding system prompt to first message");
     }
 
-    // If there's a system prompt, send it first
-    if (systemPrompt) {
-      console.log("Sending system prompt:", systemPrompt);
-      const systemResult = await model.generateContent(`System: ${systemPrompt}`);
-      console.log("System prompt response:", systemResult.response.text());
-    }
-
-    // Get the current user message (last one in the array)
-    const currentMessage = messages[messages.length - 1];
-    console.log("Sending message to Gemini:", currentMessage.content);
+    console.log("Sending message to Gemini:", userMessage.substring(0, 100) + "...");
 
     // Send the message and get the response
-    const result = await chat.sendMessage(currentMessage.content);
+    const result = await chat.sendMessage(userMessage);
     const responseText = result.response.text();
     
     console.log("Received response from Gemini:", responseText.substring(0, 100) + "...");
@@ -95,12 +90,21 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
 
 // Function to extract code from AI response
 export function extractCodeFromAIResponse(response: string): string | null {
-  // Look for code blocks with triple backticks
-  const codeBlockRegex = /```(?:jsx|tsx|javascript|js|typescript|ts)?\s*([\s\S]*?)```/;
-  const match = response.match(codeBlockRegex);
+  // First, try matching triple backtick code blocks with language specifier
+  const codeBlockRegex = /```(?:jsx|tsx|javascript|js|typescript|ts)?\s*([\s\S]*?)```/g;
+  const matches = [...response.matchAll(codeBlockRegex)];
   
-  if (match && match[1]) {
-    return match[1].trim();
+  if (matches.length > 0) {
+    // If multiple code blocks, concatenate them
+    return matches.map(match => match[1].trim()).join('\n\n');
+  }
+  
+  // If no matches with language specifier, try without language specifier
+  const simpleCodeBlockRegex = /```([\s\S]*?)```/g;
+  const simpleMatches = [...response.matchAll(simpleCodeBlockRegex)];
+  
+  if (simpleMatches.length > 0) {
+    return simpleMatches.map(match => match[1].trim()).join('\n\n');
   }
   
   return null;

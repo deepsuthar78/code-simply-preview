@@ -37,10 +37,14 @@ export function AIProvider({ children }: { children: ReactNode }) {
       setMessages(updatedMessages);
       setIsLoading(true);
 
-      // Call AI API
+      console.log("Using API key:", apiKey.substring(0, 5) + "...");
+      console.log("Using model:", model);
+      
+      // Call AI API with the API key from settings
       const aiResponse = await generateAIResponse({
         messages: updatedMessages,
-        systemPrompt
+        systemPrompt,
+        apiKey
       });
 
       // Add AI response to the state

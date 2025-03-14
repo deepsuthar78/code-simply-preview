@@ -2,7 +2,6 @@
 import { useToast } from "@/hooks/use-toast";
 
 // API key is used for Gemini API
-const GEMINI_API_KEY = "AIzaSyBJkYmMMmw21eECt9eM4_ePHyUI_9TDUFM";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 export interface AIMessage {
@@ -13,11 +12,16 @@ export interface AIMessage {
 export interface AIRequestOptions {
   messages: AIMessage[];
   systemPrompt?: string;
+  apiKey: string;
 }
 
 export async function generateAIResponse(options: AIRequestOptions): Promise<string> {
   try {
-    const { messages, systemPrompt } = options;
+    const { messages, systemPrompt, apiKey } = options;
+    
+    if (!apiKey) {
+      throw new Error("API key is required. Please add your API key in the settings.");
+    }
     
     // Format messages for Gemini API
     const formattedMessages = messages.map(msg => ({
@@ -33,7 +37,9 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
       });
     }
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    console.log("Sending request to Gemini API with key:", apiKey.substring(0, 5) + "...");
+    
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +80,9 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
     }
 
     const data = await response.json();
-    const aiResponse = data.candidates[0]?.content?.parts[0]?.text;
+    console.log("Gemini API Response:", data);
+    
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!aiResponse) {
       throw new Error("No response from AI");

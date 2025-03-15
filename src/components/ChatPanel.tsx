@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, User, Bot, History, Trash, AlertCircle, FileCode } from 'lucide-react';
+import { Send, User, Bot, History, Trash, AlertCircle, FileCode, Code, ChevronRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAI } from '@/contexts/AIContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const ChatPanel: React.FC = () => {
   const { messages, isLoading, sendMessage, clearMessages, isApiConfigured } = useAI();
@@ -67,9 +67,12 @@ const ChatPanel: React.FC = () => {
         setGeneratedFiles(files);
         setShowFilesDialog(true);
         
+        // Apply files automatically
+        handleUseFiles();
+        
         toast({
           title: "Files Generated",
-          description: `${files.length} file(s) have been created.`,
+          description: `${files.length} file(s) have been created and applied.`,
           duration: 3000,
         });
       } else {
@@ -116,6 +119,62 @@ const ChatPanel: React.FC = () => {
       
       // Set active file to the first one
       setActiveFile(`generated-${Date.now()}-0`);
+    }
+  };
+
+  // Render collapsible code panel if the message contains code markers
+  const renderMessage = (content: string, index: number) => {
+    // Check if the content contains a code block
+    if (content.includes('```')) {
+      const hasFix = content.toLowerCase().includes('fix:') || 
+                    content.toLowerCase().includes('fixed') || 
+                    content.toLowerCase().includes('fixing');
+      
+      // Separate message into parts before code block, code block, and after code block
+      const parts = content.split(/(```[a-z]*\n[\s\S]*?```)/g);
+      
+      return (
+        <div className="space-y-2">
+          {parts.map((part, partIndex) => {
+            if (part.match(/```[a-z]*\n[\s\S]*?```/)) {
+              // This is a code block
+              const codeContent = part.replace(/```[a-z]*\n|```$/g, '');
+              const language = (part.match(/```([a-z]*)\n/) || [])[1] || 'text';
+              
+              return (
+                <Collapsible key={`${index}-${partIndex}`} className="border border-white/10 rounded-md overflow-hidden">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-white/5 hover:bg-white/10 text-sm font-mono">
+                    <div className="flex items-center gap-2">
+                      <Code size={14} className="text-muted-foreground" />
+                      <span>{hasFix ? `Fix: TypeScript error in ${language} component` : `Generated ${language} code`}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                        View code
+                      </Button>
+                      <ChevronRight size={14} className="text-muted-foreground" />
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="bg-black/30 p-3 overflow-x-auto">
+                      <pre className="text-xs text-white/90 font-mono">
+                        {codeContent}
+                      </pre>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            } else if (part.trim()) {
+              // This is regular text
+              return <p key={`${index}-${partIndex}`} className="text-sm leading-relaxed whitespace-pre-line">{part}</p>;
+            }
+            return null;
+          })}
+        </div>
+      );
+    } else {
+      // Regular message without code blocks
+      return <p className="text-sm leading-relaxed whitespace-pre-line">{content}</p>;
     }
   };
 
@@ -193,7 +252,9 @@ const ChatPanel: React.FC = () => {
                       : "bg-secondary/30 text-secondary-foreground border-secondary/30"
                   )}
                 >
-                  <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
+                  {message.role === 'user' 
+                    ? <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
+                    : renderMessage(message.content, index)}
                 </div>
               </div>
             ))}
@@ -334,13 +395,24 @@ const ChatPanel: React.FC = () => {
               variant="outline" 
               onClick={() => setShowFilesDialog(false)}
             >
-              Cancel
+              Close
             </Button>
             <Button 
               onClick={handleUseFiles}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Use These Files
+              Apply Files
+            </Button>
+            <Button
+              className="flex items-center gap-2"
+              variant="outline"
+              onClick={() => {
+                setActiveTab('code');
+                setShowFilesDialog(false);
+              }}
+            >
+              <Code size={14} />
+              <span>View in editor</span>
             </Button>
           </DialogFooter>
         </DialogContent>

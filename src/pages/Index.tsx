@@ -8,7 +8,7 @@ import FileTreeSidebar, { FileItem } from '@/components/FileTreeSidebar';
 import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Code, Eye, FolderTree } from 'lucide-react';
+import { Eye, FolderTree } from 'lucide-react';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -42,7 +42,7 @@ export default MyComponent;
 
 const Index = () => {
   const { code, setCode, compiledCode, error, files, activeFileId, setActiveFile } = useCodeState({ initialCode });
-  const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
+  const [activeView, setActiveView] = useState<'preview' | 'code'>('preview');
   const [showFileSidebar, setShowFileSidebar] = useState(true);
 
   const handleCodeChange = (newCode: string) => {
@@ -94,11 +94,11 @@ const Index = () => {
                   variant="ghost"
                   className={cn(
                     "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
-                    activeTab === 'preview' 
+                    activeView === 'preview' 
                       ? "border-black text-white" 
                       : "border-transparent text-muted-foreground"
                   )}
-                  onClick={() => setActiveTab('preview')}
+                  onClick={() => setActiveView('preview')}
                 >
                   <Eye size={16} className="mr-2" />
                   Preview
@@ -107,17 +107,17 @@ const Index = () => {
                   variant="ghost"
                   className={cn(
                     "rounded-none border-b-2 px-4 py-2 transition-all duration-200",
-                    activeTab === 'code' 
+                    activeView === 'code' 
                       ? "border-black text-white" 
                       : "border-transparent text-muted-foreground"
                   )}
-                  onClick={() => setActiveTab('code')}
+                  onClick={() => setActiveView('code')}
                 >
-                  <Code size={16} className="mr-2" />
+                  <FolderTree size={16} className="mr-2" />
                   Code
                 </Button>
               </div>
-              {activeTab === 'code' && (
+              {activeView === 'code' && (
                 <Button
                   variant="ghost"
                   className="rounded-none px-4 py-2"
@@ -131,14 +131,14 @@ const Index = () => {
             {/* Content area with code editor or preview - MAKE THIS FILL ALL AVAILABLE SPACE */}
             <div className="flex-1 overflow-hidden backdrop-blur-sm">
               {/* Show preview tab content */}
-              {activeTab === 'preview' && (
+              {activeView === 'preview' && (
                 <div className="w-full h-full">
                   <Preview code={compiledCode} error={error} className="h-full" />
                 </div>
               )}
               
               {/* Show code editor tab content with optional file explorer */}
-              {activeTab === 'code' && (
+              {activeView === 'code' && (
                 <ResizablePanelGroup direction="horizontal" className="h-full">
                   {showFileSidebar && (
                     <ResizablePanel 

@@ -25,13 +25,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 const ChatPanel: React.FC = () => {
   const { messages, isLoading, sendMessage, clearMessages, isApiConfigured } = useAI();
   const [input, setInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'chat' | 'history' | 'code'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { setCode, addFile, setActiveFile } = useCodeState();
   const { toast } = useToast();
   const [showApiDialog, setShowApiDialog] = useState(!isApiConfigured);
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
-  const [showFilesDialog, setShowFilesDialog] = useState(false);
   
   useEffect(() => {
     setShowApiDialog(!isApiConfigured);
@@ -59,10 +58,16 @@ const ChatPanel: React.FC = () => {
       const { files, message } = extractFilesFromAIResponse(response);
       
       if (files.length > 0) {
-        setGeneratedFiles(files);
-        setShowFilesDialog(true);
+        files.forEach((file, index) => {
+          addFile({
+            id: `generated-${Date.now()}-${index}`,
+            name: file.name,
+            content: file.content,
+            language: file.language
+          });
+        });
         
-        handleUseFiles();
+        setActiveFile(`generated-${Date.now()}-0`);
         
         toast({
           title: "Files Generated",
@@ -93,25 +98,6 @@ const ChatPanel: React.FC = () => {
     }
   };
   
-  const handleUseFiles = () => {
-    if (generatedFiles.length > 0) {
-      setCode(generatedFiles[0].content);
-      
-      generatedFiles.forEach((file, index) => {
-        addFile({
-          id: `generated-${Date.now()}-${index}`,
-          name: file.name,
-          content: file.content,
-          language: file.language
-        });
-      });
-      
-      setShowFilesDialog(false);
-      
-      setActiveFile(`generated-${Date.now()}-0`);
-    }
-  };
-
   const renderMessage = (content: string, index: number) => {
     if (content.includes('```')) {
       const hasFix = content.toLowerCase().includes('fix:') || 
@@ -190,19 +176,6 @@ const ChatPanel: React.FC = () => {
         >
           <History size={16} className="mr-2" />
           History
-        </Button>
-        <Button
-          variant="ghost"
-          className={cn(
-            "rounded-none border-b-2 flex-1 px-4 py-2 transition-all duration-200",
-            activeTab === 'code' 
-              ? "border-black text-white" 
-              : "border-transparent text-muted-foreground"
-          )}
-          onClick={() => setActiveTab('code')}
-        >
-          <Code size={16} className="mr-2" />
-          Code
         </Button>
       </div>
       
@@ -347,62 +320,6 @@ const ChatPanel: React.FC = () => {
               }}
             >
               Open Settings
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <Dialog open={showFilesDialog} onOpenChange={setShowFilesDialog}>
-        <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border-white/10">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <FileCode className="h-5 w-5 text-blue-500" />
-              Generated Files
-            </DialogTitle>
-            <DialogDescription>
-              The AI has generated the following files for your project.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <ScrollArea className="h-[300px] mt-4 rounded-md border border-white/10 bg-black/20">
-            <div className="p-4 space-y-4">
-              {generatedFiles.map((file, index) => (
-                <div key={index} className="glass-morphism p-3 rounded-lg">
-                  <h4 className="font-medium text-white mb-2 flex items-center">
-                    <FileCode size={16} className="mr-2 text-blue-400" />
-                    {file.name}
-                  </h4>
-                  <div className="bg-black/30 p-2 rounded-md font-mono text-xs text-white/70 overflow-x-auto">
-                    <pre>{file.content.substring(0, 100)}{file.content.length > 100 ? '...' : ''}</pre>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-          
-          <DialogFooter className="mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFilesDialog(false)}
-            >
-              Close
-            </Button>
-            <Button 
-              onClick={handleUseFiles}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Apply Files
-            </Button>
-            <Button
-              className="flex items-center gap-2"
-              variant="outline"
-              onClick={() => {
-                setActiveTab('code');
-                setShowFilesDialog(false);
-              }}
-            >
-              <Code size={14} />
-              <span>View in editor</span>
             </Button>
           </DialogFooter>
         </DialogContent>

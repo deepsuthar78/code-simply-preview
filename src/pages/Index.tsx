@@ -54,6 +54,7 @@ const Index = () => {
       // First, try to match by ID if it's one of our generated files
       const matchingFileById = files.find(f => f.id === file.id);
       if (matchingFileById) {
+        console.log(`Selected file by ID: ${file.id}`);
         setActiveFile(matchingFileById.id);
         return;
       }
@@ -61,9 +62,11 @@ const Index = () => {
       // If not found by ID, try to match by name (for compatibility)
       const matchingFileByName = files.find(f => f.name === file.name);
       if (matchingFileByName) {
+        console.log(`Selected file by name: ${file.name}`);
         setActiveFile(matchingFileByName.id);
+      } else {
+        console.log(`File not found: ${file.name} (id: ${file.id})`);
       }
-      console.log(`Selected file: ${file.name} (id: ${file.id})`);
     }
   };
 

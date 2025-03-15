@@ -7,7 +7,8 @@ import {
   FileText, 
   ChevronRight, 
   ChevronDown,
-  FileCode
+  FileCode,
+  Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,6 +29,7 @@ interface FileTreeProps {
   onFileSelect?: (file: FileItem) => void;
   selectedFileId?: string;
   className?: string;
+  hasGeneratedFiles: boolean;
 }
 
 // Helper to get the appropriate icon based on file extension
@@ -130,8 +132,20 @@ export const FileTree: React.FC<FileTreeProps> = ({
   data,
   onFileSelect,
   selectedFileId,
-  className
+  className,
+  hasGeneratedFiles
 }) => {
+  if (!hasGeneratedFiles) {
+    return (
+      <div className={cn("py-6 px-4 text-center text-sm text-white/60", className)}>
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Bot size={24} className="text-white/40" />
+          <p>AI generated files will automatically appear here</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className={cn("text-sm text-white/80", className)}>
       {data.map((item) => (
@@ -155,9 +169,14 @@ const FileTreeSidebar: React.FC<{
 }> = ({ onFileSelect, selectedFileId, className }) => {
   const { files } = useCodeState();
   const [fileTreeData, setFileTreeData] = useState<FileItem[]>([]);
+  const [hasGeneratedFiles, setHasGeneratedFiles] = useState(false);
   
   // Convert flat file list to tree structure
   useEffect(() => {
+    // Check if we have user-generated files (ignore the default file)
+    const userGeneratedFiles = files.filter(file => file.id !== 'default' || files.length > 1);
+    setHasGeneratedFiles(userGeneratedFiles.length > 0);
+    
     // Create the src folder
     const srcFolder: FileItem = {
       id: 'src-folder',
@@ -238,6 +257,7 @@ const FileTreeSidebar: React.FC<{
             data={fileTreeData} 
             onFileSelect={handleFileSelectWrapper}
             selectedFileId={selectedFileId}
+            hasGeneratedFiles={hasGeneratedFiles}
           />
         </div>
       </ScrollArea>

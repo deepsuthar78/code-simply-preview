@@ -74,6 +74,7 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
             : f
         )
       );
+      console.log(`Updated existing file: ${file.name}`);
       return files[existingFileIndex].id;
     } else {
       // Add a new file
@@ -85,6 +86,7 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
       };
       
       setFiles(prevFiles => [...prevFiles, newFile]);
+      console.log(`Added new file: ${file.name} with ID: ${fileId}`);
       return newFile.id;
     }
   }, [files]);
@@ -108,6 +110,7 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
   const setActiveFile = useCallback((fileId: string) => {
     const file = files.find(f => f.id === fileId);
     if (file) {
+      console.log(`Setting active file: ${file.name} (id: ${fileId})`);
       setActiveFileId(fileId);
       setCode(file.content);
       
@@ -118,6 +121,8 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       }
+    } else {
+      console.log(`File not found: ${fileId}`);
     }
   }, [files]);
   

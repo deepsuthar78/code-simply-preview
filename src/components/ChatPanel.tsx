@@ -2,20 +2,41 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, User, Bot, History, Trash, AlertCircle } from 'lucide-react';
+import { Send, User, Bot, History, Trash, AlertCircle, FileCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAI } from '@/contexts/AIContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCodeState } from '@/hooks/useCodeState';
-import { extractCodeFromAIResponse } from '@/services/aiService';
+import { 
+  extractCodeFromAIResponse, 
+  extractFilesFromAIResponse, 
+  GeneratedFile 
+} from '@/services/aiService';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const ChatPanel: React.FC = () => {
   const { messages, isLoading, sendMessage, clearMessages, isApiConfigured } = useAI();
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { setCode } = useCodeState();
+  const { setCode, addFile, setActiveFile } = useCodeState();
   const { toast } = useToast();
+  const [showApiDialog, setShowApiDialog] = useState(!isApiConfigured);
+  const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
+  const [showFilesDialog, setShowFilesDialog] = useState(false);
+  
+  // Check if API is configured
+  useEffect(() => {
+    setShowApiDialog(!isApiConfigured);
+  }, [isApiConfigured]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -27,11 +48,7 @@ const ChatPanel: React.FC = () => {
   const handleSend = async () => {
     if (input.trim() === '') return;
     if (!isApiConfigured) {
-      toast({
-        title: "API Not Configured",
-        description: "Please configure your API key in settings first.",
-        variant: "destructive",
-      });
+      setShowApiDialog(true);
       return;
     }
     
@@ -42,16 +59,31 @@ const ChatPanel: React.FC = () => {
       // Send message to AI and get response
       const response = await sendMessage(userInput);
       
-      // Check if response contains code and update the editor if it does
-      const extractedCode = extractCodeFromAIResponse(response);
-      if (extractedCode) {
-        setCode(extractedCode);
+      // Process the response for files
+      const { files, message } = extractFilesFromAIResponse(response);
+      
+      if (files.length > 0) {
+        // Save generated files
+        setGeneratedFiles(files);
+        setShowFilesDialog(true);
         
         toast({
-          title: "Code Generated",
-          description: "The generated code has been applied to the editor.",
+          title: "Files Generated",
+          description: `${files.length} file(s) have been created.`,
           duration: 3000,
         });
+      } else {
+        // Check if response contains code and update the editor if it does
+        const extractedCode = extractCodeFromAIResponse(response);
+        if (extractedCode) {
+          setCode(extractedCode);
+          
+          toast({
+            title: "Code Generated",
+            description: "The generated code has been applied to the editor.",
+            duration: 3000,
+          });
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -64,9 +96,31 @@ const ChatPanel: React.FC = () => {
       handleSend();
     }
   };
+  
+  const handleUseFiles = () => {
+    // Apply the first file to the main editor
+    if (generatedFiles.length > 0) {
+      setCode(generatedFiles[0].content);
+      
+      // Add all files to the file system
+      generatedFiles.forEach((file, index) => {
+        addFile({
+          id: `generated-${Date.now()}-${index}`,
+          name: file.name,
+          content: file.content,
+          language: file.language
+        });
+      });
+      
+      setShowFilesDialog(false);
+      
+      // Set active file to the first one
+      setActiveFile(`generated-${Date.now()}-0`);
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full relative overflow-hidden">
+    <div className="flex flex-col h-full w-full relative overflow-hidden">
       {/* Tabs */}
       <div className="border-b border-white/10 flex backdrop-blur-sm sticky top-0 z-10">
         <Button
@@ -113,7 +167,7 @@ const ChatPanel: React.FC = () => {
               <div className="flex flex-col items-center justify-center h-full text-center p-6">
                 <Bot size={32} className="mb-4 opacity-50" />
                 <h3 className="text-lg font-medium text-white/80 mb-2">How can I help you today?</h3>
-                <p className="text-sm text-white/50 mb-6">Ask me to write code or help with your project</p>
+                <p className="text-sm text-white/50 mb-6">Ask me to write code or create components for your project</p>
               </div>
             )}
             
@@ -179,7 +233,7 @@ const ChatPanel: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={isApiConfigured 
-                  ? "Generate code or ask for help..." 
+                  ? "Ask me to create components, pages, or features..." 
                   : "Configure API key in settings first"}
                 className="bg-secondary/30 border-white/10 focus-visible:ring-black/20 placeholder:text-white/30 transition-all duration-200"
                 disabled={!isApiConfigured || isLoading}
@@ -204,6 +258,93 @@ const ChatPanel: React.FC = () => {
           </p>
         </div>
       )}
+      
+      {/* API Configuration Dialog */}
+      <Dialog open={showApiDialog} onOpenChange={setShowApiDialog}>
+        <DialogContent className="sm:max-w-[425px] bg-background/95 backdrop-blur-xl border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-500" />
+              API Key Required
+            </DialogTitle>
+            <DialogDescription>
+              Please configure your AI provider API key to use the chat functionality.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 text-sm text-muted-foreground">
+            <p>You need to add your Gemini API key to use the AI features.</p>
+            <p className="mt-2">Once you have your API key, go to Settings and add it in the API Key tab.</p>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowApiDialog(false)}
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                // Simulate clicking the settings button
+                const settingsButton = document.querySelector('[data-settings-trigger="true"]') as HTMLButtonElement;
+                if (settingsButton) {
+                  settingsButton.click();
+                }
+                setShowApiDialog(false);
+              }}
+            >
+              Open Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Generated Files Dialog */}
+      <Dialog open={showFilesDialog} onOpenChange={setShowFilesDialog}>
+        <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <FileCode className="h-5 w-5 text-blue-500" />
+              Generated Files
+            </DialogTitle>
+            <DialogDescription>
+              The AI has generated the following files for your project.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="h-[300px] mt-4 rounded-md border border-white/10 bg-black/20">
+            <div className="p-4 space-y-4">
+              {generatedFiles.map((file, index) => (
+                <div key={index} className="glass-morphism p-3 rounded-lg">
+                  <h4 className="font-medium text-white mb-2 flex items-center">
+                    <FileCode size={16} className="mr-2 text-blue-400" />
+                    {file.name}
+                  </h4>
+                  <div className="bg-black/30 p-2 rounded-md font-mono text-xs text-white/70 overflow-x-auto">
+                    <pre>{file.content.substring(0, 100)}{file.content.length > 100 ? '...' : ''}</pre>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          
+          <DialogFooter className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilesDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUseFiles}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Use These Files
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

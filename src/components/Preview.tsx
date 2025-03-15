@@ -29,63 +29,77 @@ const Preview: React.FC<PreviewProps> = ({
     
     setIsLoading(true);
     
-    // In a real implementation, this would properly compile and inject the code
-    // For our demo, we'll create a basic HTML document with the React code
+    // Create a basic HTML document with React and render the component
     const previewContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Live Preview</title>
           <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+          <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+          <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              padding: 1rem;
               transition: all 0.3s ease;
+              margin: 0;
+              padding: 0;
+              height: 100vh;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              background-color: rgba(20, 20, 20, 0.1);
             }
             
-            .preview-root {
-              transition: all 0.3s ease;
-            }
-            
-            * {
-              transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+            #root {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
           </style>
-          <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-          <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
         </head>
         <body>
-          <div id="root" class="preview-root"></div>
-          <script>
-            // This is a simplified preview, in a real implementation
-            // we would properly compile JSX and run it
-            document.getElementById('root').innerHTML = 
-              '<div class="flex items-center justify-center min-h-screen">' +
-              '<div class="text-center p-8 bg-white rounded-xl shadow-xl transform transition hover:scale-105">' +
-              '<h2 class="text-2xl font-bold text-blue-600 mb-4">Interactive Preview</h2>' +
-              '<p class="text-gray-700">Your code would be rendered here in a real implementation</p>' +
-              '<div class="mt-6 flex justify-center gap-4">' +
-              '<button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Button 1</button>' +
-              '<button class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">Button 2</button>' +
-              '</div>' +
-              '<p class="text-xs text-gray-500 mt-6">Using live JSX/TSX compilation</p>' +
-              '</div>' +
-              '</div>';
+          <div id="root"></div>
+          
+          <script type="text/babel">
+            try {
+              ${code}
               
-            // Add some interactivity to the preview
-            setTimeout(() => {
-              const buttons = document.querySelectorAll('button');
-              buttons.forEach(button => {
-                button.addEventListener('click', () => {
-                  button.textContent = 'Clicked!';
-                  setTimeout(() => {
-                    button.textContent = button.textContent.replace('Clicked!', button.textContent.includes('1') ? 'Button 1' : 'Button 2');
-                  }, 1000);
-                });
-              });
-            }, 500);
+              // Get the exported component
+              const Component = typeof MyComponent !== 'undefined' 
+                ? MyComponent 
+                : (typeof App !== 'undefined' ? App : null);
+                
+              if (Component) {
+                ReactDOM.render(
+                  <Component />,
+                  document.getElementById('root')
+                );
+              } else {
+                document.getElementById('root').innerHTML = 
+                  '<div class="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex flex-col items-center">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />' +
+                  '</svg>' +
+                  '<p class="text-center">Could not find a React component to render.<br>Export your component as default or name it "MyComponent" or "App".</p>' +
+                  '</div>';
+              }
+            } catch (error) {
+              document.getElementById('root').innerHTML = 
+                '<div class="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex flex-col items-center">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />' +
+                '</svg>' +
+                '<p class="text-center font-medium text-red-500">Error:</p>' +
+                '<pre class="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded overflow-auto max-w-full">' + error.message + '</pre>' +
+                '</div>';
+              console.error(error);
+            }
           </script>
         </body>
       </html>
@@ -211,10 +225,10 @@ const Preview: React.FC<PreviewProps> = ({
       )}>
         <div 
           className={cn(
-            "transition-all duration-300 h-full glass-morphism bg-white shadow-lg overflow-hidden",
-            viewportSize === 'desktop' ? "w-full" : 
-            viewportSize === 'tablet' ? "w-[768px]" : 
-            "w-[375px]",
+            "transition-all duration-300 h-full w-full glass-morphism bg-white shadow-lg overflow-hidden",
+            viewportSize === 'desktop' ? "max-w-full" : 
+            viewportSize === 'tablet' ? "max-w-[768px]" : 
+            "max-w-[375px]",
             isFullscreen ? "rounded-none" : "rounded-lg"
           )}
         >

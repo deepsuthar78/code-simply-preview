@@ -12,6 +12,17 @@ export interface AIRequestOptions {
   apiKey: string;
 }
 
+export interface FileGenerationResult {
+  files: GeneratedFile[];
+  message: string;
+}
+
+export interface GeneratedFile {
+  name: string;
+  content: string;
+  language: string;
+}
+
 export async function generateAIResponse(options: AIRequestOptions): Promise<string> {
   try {
     const { messages, systemPrompt, apiKey } = options;
@@ -68,8 +79,36 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
     // If there's a system prompt, prepend it to the user message
     let userMessage = messages[messages.length - 1].content;
     if (systemPrompt && messages.length === 1) {
-      userMessage = `${systemPrompt}\n\n${userMessage}`;
-      console.log("Adding system prompt to first message");
+      const enhancedSystemPrompt = `${systemPrompt}
+      
+When I ask you to create code, please respond with a message followed by a clear list of files to create.
+For each file, use the following format:
+
+FILE: [filename].[extension]
+\`\`\`[language]
+// code content here
+\`\`\`
+
+For example, if I ask you to create a button component, respond with something like:
+"I've created a button component for you. Here are the files:"
+
+FILE: Button.tsx
+\`\`\`tsx
+import React from 'react';
+// ... button component code
+\`\`\`
+
+FILE: Button.css
+\`\`\`css
+.button {
+  // ... styles
+}
+\`\`\`
+
+This will help me generate the files automatically.`;
+      
+      userMessage = `${enhancedSystemPrompt}\n\n${userMessage}`;
+      console.log("Adding enhanced system prompt to first message");
     }
 
     console.log("Sending message to Gemini:", userMessage.substring(0, 100) + "...");
@@ -111,4 +150,65 @@ export function extractCodeFromAIResponse(response: string): string | null {
   }
   
   return null;
+}
+
+// Function to extract generated files from AI response
+export function extractFilesFromAIResponse(response: string): FileGenerationResult {
+  const files: GeneratedFile[] = [];
+  let message = response;
+  
+  // Extract files with format: FILE: filename.ext
+  const fileRegex = /FILE:\s*([^\n]+)\s*```([a-z]*)\s*([\s\S]*?)```/g;
+  const matches = [...response.matchAll(fileRegex)];
+  
+  if (matches.length > 0) {
+    // Extract message part (text before the first FILE: marker)
+    const firstFileIndex = response.indexOf("FILE:");
+    if (firstFileIndex > 0) {
+      message = response.substring(0, firstFileIndex).trim();
+    }
+    
+    // Process each file
+    for (const match of matches) {
+      const fileName = match[1].trim();
+      const language = match[2] || getLanguageFromFileName(fileName);
+      let content = match[3].trim();
+      
+      files.push({
+        name: fileName,
+        content,
+        language
+      });
+    }
+  }
+  
+  return {
+    files,
+    message
+  };
+}
+
+// Helper function to determine language from file extension
+function getLanguageFromFileName(fileName: string): string {
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+  
+  switch (extension) {
+    case 'js':
+      return 'javascript';
+    case 'ts':
+      return 'typescript';
+    case 'jsx':
+    case 'tsx':
+      return 'tsx';
+    case 'css':
+      return 'css';
+    case 'html':
+      return 'html';
+    case 'json':
+      return 'json';
+    case 'md':
+      return 'markdown';
+    default:
+      return '';
+  }
 }

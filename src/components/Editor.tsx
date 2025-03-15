@@ -2,7 +2,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useCodeState } from '@/hooks/useCodeState';
 import { cn } from '@/lib/utils';
-import { File } from 'lucide-react';
+import { File, X, Plus } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 
 interface EditorProps {
   className?: string;
@@ -10,55 +12,27 @@ interface EditorProps {
   initialCode?: string;
 }
 
-interface CodeFile {
-  id: string;
-  name: string;
-  content: string;
-  language: string;
-}
-
 const Editor: React.FC<EditorProps> = ({
   className,
   onCodeChange,
   initialCode
 }) => {
-  const { code, setCode } = useCodeState({ initialCode });
+  const { 
+    code, 
+    setCode, 
+    files, 
+    addFile, 
+    removeFile, 
+    activeFileId, 
+    setActiveFile 
+  } = useCodeState({ initialCode });
+  
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const [activeLineNumber, setActiveLineNumber] = useState<number>(1);
+  const [showNewFileInput, setShowNewFileInput] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
   
-  // Demo files for demonstration
-  const [files, setFiles] = useState<CodeFile[]>([
-    { id: '1', name: 'App.tsx', content: code, language: 'tsx' },
-    { id: '2', name: 'styles.css', content: '/* CSS styles here */', language: 'css' },
-    { id: '3', name: 'utils.ts', content: '// Utility functions', language: 'ts' },
-  ]);
-  
-  const [activeFileId, setActiveFileId] = useState<string>('1');
-  
-  // Update active file when switching tabs
-  const handleFileChange = (fileId: string) => {
-    // Save current file content before switching
-    const updatedFiles = files.map(file => {
-      if (file.id === activeFileId) {
-        return { ...file, content: code };
-      }
-      return file;
-    });
-    
-    setFiles(updatedFiles);
-    setActiveFileId(fileId);
-    
-    // Update editor with new file content
-    const newActiveFile = updatedFiles.find(file => file.id === fileId);
-    if (newActiveFile) {
-      setCode(newActiveFile.content);
-      if (onCodeChange) {
-        onCodeChange(newActiveFile.content);
-      }
-    }
-  };
-
   // Update line numbers when code changes
   useEffect(() => {
     if (!lineNumbersRef.current) return;
@@ -93,16 +67,6 @@ const Editor: React.FC<EditorProps> = ({
     const newCode = e.target.value;
     setCode(newCode);
     
-    // Update the current file's content
-    const updatedFiles = files.map(file => {
-      if (file.id === activeFileId) {
-        return { ...file, content: newCode };
-      }
-      return file;
-    });
-    
-    setFiles(updatedFiles);
-    
     if (onCodeChange) {
       onCodeChange(newCode);
     }
@@ -127,37 +91,125 @@ const Editor: React.FC<EditorProps> = ({
       handleCodeChange({ target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>);
     }
   };
-
-  // Format code on double click (simulated formatter)
-  const handleDoubleClick = () => {
-    // This is a placeholder for a proper code formatter
-    const formatted = code.trim();
-    setCode(formatted);
-    if (onCodeChange) {
-      onCodeChange(formatted);
+  
+  // Create a new file
+  const handleCreateNewFile = () => {
+    if (newFileName.trim() === '') return;
+    
+    // Determine language from file extension
+    const extension = newFileName.split('.').pop()?.toLowerCase() || 'txt';
+    let language = 'text';
+    
+    switch (extension) {
+      case 'js':
+        language = 'javascript';
+        break;
+      case 'ts':
+        language = 'typescript';
+        break;
+      case 'jsx':
+      case 'tsx':
+        language = 'tsx';
+        break;
+      case 'css':
+        language = 'css';
+        break;
+      case 'html':
+        language = 'html';
+        break;
+      case 'json':
+        language = 'json';
+        break;
+    }
+    
+    const newFileContent = extension === 'tsx' || extension === 'jsx' 
+      ? `import React from 'react';\n\nconst ${newFileName.split('.')[0]} = () => {\n  return (\n    <div>\n      New Component\n    </div>\n  );\n};\n\nexport default ${newFileName.split('.')[0]};`
+      : '';
+    
+    const newFileId = addFile({
+      name: newFileName,
+      content: newFileContent,
+      language
+    });
+    
+    setActiveFile(newFileId);
+    setNewFileName('');
+    setShowNewFileInput(false);
+  };
+  
+  // Handle new file input key press
+  const handleNewFileKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateNewFile();
+    } else if (e.key === 'Escape') {
+      setShowNewFileInput(false);
+      setNewFileName('');
     }
   };
 
   return (
     <div className={cn("w-full h-full flex flex-col glass-morphism bg-black/30", className)}>
       {/* File tabs */}
-      <div className="flex border-b border-white/10 bg-black/20 overflow-x-auto scrollbar-none">
-        {files.map(file => (
-          <button
-            key={file.id}
-            onClick={() => handleFileChange(file.id)}
-            className={cn(
-              "px-4 py-2 text-sm flex items-center gap-2 border-r border-white/5 transition-colors",
-              activeFileId === file.id 
-                ? "bg-black/30 text-white" 
-                : "text-white/50 hover:text-white/80 hover:bg-black/10"
-            )}
-          >
-            <File size={14} />
-            {file.name}
-          </button>
-        ))}
-      </div>
+      <ScrollArea orientation="horizontal" className="border-b border-white/10 bg-black/20 scrollbar-none">
+        <div className="flex min-w-full">
+          {files.map(file => (
+            <button
+              key={file.id}
+              onClick={() => setActiveFile(file.id)}
+              className={cn(
+                "px-4 py-2 text-sm flex items-center gap-2 border-r border-white/5 transition-colors group",
+                activeFileId === file.id 
+                  ? "bg-black/30 text-white" 
+                  : "text-white/50 hover:text-white/80 hover:bg-black/10"
+              )}
+            >
+              <File size={14} />
+              <span>{file.name}</span>
+              {files.length > 1 && (
+                <button
+                  className="ml-1 opacity-0 group-hover:opacity-100 text-white/50 hover:text-white/80 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile(file.id);
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </button>
+          ))}
+          
+          {showNewFileInput ? (
+            <div className="flex items-center bg-black/20 px-3 py-1 border-r border-white/5">
+              <input
+                type="text"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                onKeyDown={handleNewFileKeyDown}
+                placeholder="filename.tsx"
+                className="bg-transparent border-none outline-none text-sm text-white w-32 px-2 py-1"
+                autoFocus
+              />
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-6 px-2 text-xs"
+                onClick={handleCreateNewFile}
+              >
+                Add
+              </Button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewFileInput(true)}
+              className="px-4 py-2 text-sm flex items-center gap-1 text-white/50 hover:text-white/80 hover:bg-black/10 transition-colors"
+            >
+              <Plus size={14} />
+              <span>New File</span>
+            </button>
+          )}
+        </div>
+      </ScrollArea>
       
       <div className="flex-1 overflow-hidden flex">
         <div 
@@ -173,7 +225,6 @@ const Editor: React.FC<EditorProps> = ({
             onKeyDown={handleTabKey}
             onClick={handleCursorMove}
             onKeyUp={handleCursorMove}
-            onDoubleClick={handleDoubleClick}
             className="absolute inset-0 bg-transparent text-sm font-mono p-4 outline-none resize-none editor-scrollbar code-editor text-white/90"
             spellCheck="false"
             autoCapitalize="none"

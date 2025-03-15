@@ -1,15 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Folder, 
   FolderOpen, 
   File, 
   FileText, 
   ChevronRight, 
-  ChevronDown 
+  ChevronDown,
+  FileCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useCodeState } from '@/hooks/useCodeState';
 
 type FileType = 'file' | 'folder';
 
@@ -35,7 +37,7 @@ const getFileIcon = (extension?: string) => {
     case 'ts':
     case 'jsx':
     case 'js':
-      return <FileText size={16} className="text-blue-400" />;
+      return <FileCode size={16} className="text-blue-400" />;
     case 'css':
     case 'scss':
       return <FileText size={16} className="text-pink-400" />;
@@ -55,7 +57,7 @@ const FileTreeItem: React.FC<{
   onFileSelect?: (file: FileItem) => void;
   selectedFileId?: string;
 }> = ({ item, level, onFileSelect, selectedFileId }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(level < 1); // Auto-open first level
   const hasChildren = item.children && item.children.length > 0;
   const isFolder = item.type === 'folder';
   const extension = item.name.split('.').pop();
@@ -80,7 +82,6 @@ const FileTreeItem: React.FC<{
         className={cn(
           "flex items-center py-1 px-2 rounded-md cursor-pointer hover:bg-black/20 text-sm",
           selectedFileId === item.id ? "bg-black/30 text-white" : "text-white/70",
-          `pl-${level + 2}`
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleItemClick}
@@ -152,69 +153,60 @@ const FileTreeSidebar: React.FC<{
   selectedFileId?: string;
   className?: string;
 }> = ({ onFileSelect, selectedFileId, className }) => {
-  // Demo file structure data
-  const fileTreeData: FileItem[] = [
-    {
-      id: 'src',
+  const { files } = useCodeState();
+  const [fileTreeData, setFileTreeData] = useState<FileItem[]>([]);
+  
+  // Convert flat file list to tree structure
+  useEffect(() => {
+    // Create the src folder
+    const srcFolder: FileItem = {
+      id: 'src-folder',
       name: 'src',
       type: 'folder',
-      children: [
-        {
-          id: 'components',
-          name: 'components',
-          type: 'folder',
-          children: [
-            { id: 'app-tsx', name: 'App.tsx', type: 'file' },
-            { id: 'button-tsx', name: 'Button.tsx', type: 'file' },
-            { id: 'editor-tsx', name: 'Editor.tsx', type: 'file' },
-            { id: 'navbar-tsx', name: 'Navbar.tsx', type: 'file' },
-            {
-              id: 'ui',
-              name: 'ui',
-              type: 'folder',
-              children: [
-                { id: 'button-ui-tsx', name: 'button.tsx', type: 'file' },
-                { id: 'card-tsx', name: 'card.tsx', type: 'file' },
-                { id: 'dialog-tsx', name: 'dialog.tsx', type: 'file' },
-              ]
-            }
-          ]
-        },
-        {
-          id: 'pages',
-          name: 'pages',
-          type: 'folder',
-          children: [
-            { id: 'index-tsx', name: 'Index.tsx', type: 'file' },
-            { id: 'not-found-tsx', name: 'NotFound.tsx', type: 'file' },
-          ]
-        },
-        {
-          id: 'hooks',
-          name: 'hooks',
-          type: 'folder',
-          children: [
-            { id: 'use-code-state-tsx', name: 'useCodeState.tsx', type: 'file' },
-            { id: 'use-mobile-tsx', name: 'use-mobile.tsx', type: 'file' },
-          ]
-        },
-        { id: 'main-tsx', name: 'main.tsx', type: 'file' },
-        { id: 'index-css', name: 'index.css', type: 'file' },
-      ]
-    },
-    {
-      id: 'public',
-      name: 'public',
+      children: []
+    };
+    
+    // Create components folder
+    const componentsFolder: FileItem = {
+      id: 'components-folder',
+      name: 'components',
       type: 'folder',
-      children: [
-        { id: 'favicon-ico', name: 'favicon.ico', type: 'file' },
-        { id: 'og-image-png', name: 'og-image.png', type: 'file' },
-      ]
-    },
-    { id: 'package-json', name: 'package.json', type: 'file' },
-    { id: 'tsconfig-json', name: 'tsconfig.json', type: 'file' },
-    { id: 'vite-config-ts', name: 'vite.config.ts', type: 'file' },
-  ];
+      children: []
+    };
+    
+    // Add user files to components folder
+    files.forEach(file => {
+      // Create a file item for each file
+      const fileItem: FileItem = {
+        id: file.id,
+        name: file.name,
+        type: 'file',
+        extension: file.name.split('.').pop()
+      };
+      
+      componentsFolder.children?.push(fileItem);
+    });
+    
+    // Add components folder to src
+    srcFolder.children?.push(componentsFolder);
+    
+    // Add some standard project files
+    setFileTreeData([
+      srcFolder,
+      {
+        id: 'public-folder',
+        name: 'public',
+        type: 'folder',
+        children: [
+          { id: 'favicon-ico', name: 'favicon.ico', type: 'file', extension: 'ico' },
+          { id: 'index-html', name: 'index.html', type: 'file', extension: 'html' }
+        ]
+      },
+      { id: 'package-json', name: 'package.json', type: 'file', extension: 'json' },
+      { id: 'tsconfig-json', name: 'tsconfig.json', type: 'file', extension: 'json' },
+      { id: 'vite-config-ts', name: 'vite.config.ts', type: 'file', extension: 'ts' }
+    ]);
+  }, [files]);
 
   return (
     <div className={cn("h-full bg-black/20 glass-morphism border-r border-white/10", className)}>

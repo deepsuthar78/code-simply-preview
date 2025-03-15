@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Editor from '@/components/Editor';
@@ -40,10 +41,9 @@ export default MyComponent;
 `;
 
 const Index = () => {
-  const { code, setCode, compiledCode, error } = useCodeState({ initialCode });
+  const { code, setCode, compiledCode, error, files, activeFileId, setActiveFile } = useCodeState({ initialCode });
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [showFileSidebar, setShowFileSidebar] = useState(true);
-  const [selectedFileId, setSelectedFileId] = useState<string | undefined>(undefined);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -51,7 +51,11 @@ const Index = () => {
 
   const handleFileSelect = (file: FileItem) => {
     if (file.type === 'file') {
-      setSelectedFileId(file.id);
+      // Find the corresponding file in our files array by name
+      const matchingFile = files.find(f => f.name === file.name);
+      if (matchingFile) {
+        setActiveFile(matchingFile.id);
+      }
       console.log(`Selected file: ${file.name}`);
     }
   };
@@ -81,8 +85,8 @@ const Index = () => {
             className="resize-handle"
           />
           
-          {/* Middle - Code/Preview with File Explorer */}
-          <ResizablePanel defaultSize={70} className="flex flex-col">
+          {/* Right Side - Code/Preview with File Explorer - FULL WIDTH */}
+          <ResizablePanel defaultSize={70} className="flex flex-col w-full">
             {/* Tabs for Preview/Code */}
             <div className="border-b border-white/10 flex glass-morphism backdrop-blur-lg justify-between">
               <div className="flex">
@@ -124,7 +128,7 @@ const Index = () => {
               )}
             </div>
             
-            {/* Content area with code editor or preview */}
+            {/* Content area with code editor or preview - MAKE THIS FILL ALL AVAILABLE SPACE */}
             <div className="flex-1 overflow-hidden backdrop-blur-sm">
               {/* Show preview tab content */}
               {activeTab === 'preview' && (
@@ -144,7 +148,7 @@ const Index = () => {
                     >
                       <FileTreeSidebar 
                         onFileSelect={handleFileSelect}
-                        selectedFileId={selectedFileId}
+                        selectedFileId={activeFileId}
                         className="h-full"
                       />
                     </ResizablePanel>

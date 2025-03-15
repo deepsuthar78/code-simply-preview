@@ -25,7 +25,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 const ChatPanel: React.FC = () => {
   const { messages, isLoading, sendMessage, clearMessages, isApiConfigured } = useAI();
   const [input, setInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'history' | 'code'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { setCode, addFile, setActiveFile } = useCodeState();
   const { toast } = useToast();
@@ -33,12 +33,10 @@ const ChatPanel: React.FC = () => {
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
   const [showFilesDialog, setShowFilesDialog] = useState(false);
   
-  // Check if API is configured
   useEffect(() => {
     setShowApiDialog(!isApiConfigured);
   }, [isApiConfigured]);
   
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -56,18 +54,14 @@ const ChatPanel: React.FC = () => {
     setInput('');
     
     try {
-      // Send message to AI and get response
       const response = await sendMessage(userInput);
       
-      // Process the response for files
       const { files, message } = extractFilesFromAIResponse(response);
       
       if (files.length > 0) {
-        // Save generated files
         setGeneratedFiles(files);
         setShowFilesDialog(true);
         
-        // Apply files automatically
         handleUseFiles();
         
         toast({
@@ -76,7 +70,6 @@ const ChatPanel: React.FC = () => {
           duration: 3000,
         });
       } else {
-        // Check if response contains code and update the editor if it does
         const extractedCode = extractCodeFromAIResponse(response);
         if (extractedCode) {
           setCode(extractedCode);
@@ -101,11 +94,9 @@ const ChatPanel: React.FC = () => {
   };
   
   const handleUseFiles = () => {
-    // Apply the first file to the main editor
     if (generatedFiles.length > 0) {
       setCode(generatedFiles[0].content);
       
-      // Add all files to the file system
       generatedFiles.forEach((file, index) => {
         addFile({
           id: `generated-${Date.now()}-${index}`,
@@ -117,27 +108,22 @@ const ChatPanel: React.FC = () => {
       
       setShowFilesDialog(false);
       
-      // Set active file to the first one
       setActiveFile(`generated-${Date.now()}-0`);
     }
   };
 
-  // Render collapsible code panel if the message contains code markers
   const renderMessage = (content: string, index: number) => {
-    // Check if the content contains a code block
     if (content.includes('```')) {
       const hasFix = content.toLowerCase().includes('fix:') || 
                     content.toLowerCase().includes('fixed') || 
                     content.toLowerCase().includes('fixing');
       
-      // Separate message into parts before code block, code block, and after code block
       const parts = content.split(/(```[a-z]*\n[\s\S]*?```)/g);
       
       return (
         <div className="space-y-2">
           {parts.map((part, partIndex) => {
             if (part.match(/```[a-z]*\n[\s\S]*?```/)) {
-              // This is a code block
               const codeContent = part.replace(/```[a-z]*\n|```$/g, '');
               const language = (part.match(/```([a-z]*)\n/) || [])[1] || 'text';
               
@@ -165,7 +151,6 @@ const ChatPanel: React.FC = () => {
                 </Collapsible>
               );
             } else if (part.trim()) {
-              // This is regular text
               return <p key={`${index}-${partIndex}`} className="text-sm leading-relaxed whitespace-pre-line">{part}</p>;
             }
             return null;
@@ -173,14 +158,12 @@ const ChatPanel: React.FC = () => {
         </div>
       );
     } else {
-      // Regular message without code blocks
       return <p className="text-sm leading-relaxed whitespace-pre-line">{content}</p>;
     }
   };
 
   return (
     <div className="flex flex-col h-full w-full relative overflow-hidden">
-      {/* Tabs */}
       <div className="border-b border-white/10 flex backdrop-blur-sm sticky top-0 z-10">
         <Button
           variant="ghost"
@@ -208,11 +191,23 @@ const ChatPanel: React.FC = () => {
           <History size={16} className="mr-2" />
           History
         </Button>
+        <Button
+          variant="ghost"
+          className={cn(
+            "rounded-none border-b-2 flex-1 px-4 py-2 transition-all duration-200",
+            activeTab === 'code' 
+              ? "border-black text-white" 
+              : "border-transparent text-muted-foreground"
+          )}
+          onClick={() => setActiveTab('code')}
+        >
+          <Code size={16} className="mr-2" />
+          Code
+        </Button>
       </div>
       
       {activeTab === 'chat' ? (
         <>
-          {/* API not configured warning */}
           {!isApiConfigured && (
             <div className="m-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md text-yellow-300 text-sm flex items-center gap-2 animate-pulse-subtle">
               <AlertCircle size={16} />
@@ -220,7 +215,6 @@ const ChatPanel: React.FC = () => {
             </div>
           )}
           
-          {/* Chat content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none bg-black/20">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center p-6">
@@ -277,7 +271,6 @@ const ChatPanel: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Input area */}
           <div className="p-4 border-t border-white/10 backdrop-blur-sm">
             <div className="flex gap-2">
               <Button
@@ -320,7 +313,6 @@ const ChatPanel: React.FC = () => {
         </div>
       )}
       
-      {/* API Configuration Dialog */}
       <Dialog open={showApiDialog} onOpenChange={setShowApiDialog}>
         <DialogContent className="sm:max-w-[425px] bg-background/95 backdrop-blur-xl border-white/10">
           <DialogHeader>
@@ -347,7 +339,6 @@ const ChatPanel: React.FC = () => {
             </Button>
             <Button 
               onClick={() => {
-                // Simulate clicking the settings button
                 const settingsButton = document.querySelector('[data-settings-trigger="true"]') as HTMLButtonElement;
                 if (settingsButton) {
                   settingsButton.click();
@@ -361,7 +352,6 @@ const ChatPanel: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Generated Files Dialog */}
       <Dialog open={showFilesDialog} onOpenChange={setShowFilesDialog}>
         <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border-white/10">
           <DialogHeader>

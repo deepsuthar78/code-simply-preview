@@ -150,7 +150,7 @@ const Editor: React.FC<EditorProps> = ({
   return (
     <div className={cn("w-full h-full flex flex-col glass-morphism bg-black/30", className)}>
       {/* File tabs */}
-      <ScrollArea orientation="horizontal" className="border-b border-white/10 bg-black/20 scrollbar-none">
+      <ScrollArea className="border-b border-white/10 bg-black/20 scrollbar-none">
         <div className="flex min-w-full">
           {files.map(file => (
             <button

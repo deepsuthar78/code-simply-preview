@@ -55,8 +55,9 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
     });
 
     // Start a chat session - convert our message format to the one expected by the Gemini API
+    // TypeScript needs explicit typing to ensure 'role' is one of "function", "user", or "model"
     const history = messages.slice(0, -1).map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user', // Convert 'assistant' to 'model' to match Gemini's expected roles
+      role: msg.role === 'assistant' ? 'model' as const : 'user' as const,
       parts: [{ text: msg.content }]
     }));
     

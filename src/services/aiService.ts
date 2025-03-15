@@ -54,12 +54,14 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<str
       },
     });
 
-    // Start a chat session
+    // Start a chat session - convert our message format to the one expected by the Gemini API
+    const history = messages.slice(0, -1).map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user', // Convert 'assistant' to 'model' to match Gemini's expected roles
+      parts: [{ text: msg.content }]
+    }));
+    
     const chat = model.startChat({
-      history: messages.slice(0, -1).map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.content }]
-      })),
+      history: history,
     });
 
     // If there's a system prompt, prepend it to the user message

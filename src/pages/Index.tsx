@@ -51,12 +51,19 @@ const Index = () => {
 
   const handleFileSelect = (file: FileItem) => {
     if (file.type === 'file') {
-      // Find the corresponding file in our files array by name
-      const matchingFile = files.find(f => f.name === file.name);
-      if (matchingFile) {
-        setActiveFile(matchingFile.id);
+      // First, try to match by ID if it's one of our generated files
+      const matchingFileById = files.find(f => f.id === file.id);
+      if (matchingFileById) {
+        setActiveFile(matchingFileById.id);
+        return;
       }
-      console.log(`Selected file: ${file.name}`);
+      
+      // If not found by ID, try to match by name (for compatibility)
+      const matchingFileByName = files.find(f => f.name === file.name);
+      if (matchingFileByName) {
+        setActiveFile(matchingFileByName.id);
+      }
+      console.log(`Selected file: ${file.name} (id: ${file.id})`);
     }
   };
 

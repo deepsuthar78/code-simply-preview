@@ -60,16 +60,34 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
   }, [activeFileId]);
   
   const addFile = useCallback((file: Omit<CodeFile, 'id'> & { id?: string }) => {
-    const newFile: CodeFile = {
-      id: file.id || `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name: file.name,
-      content: file.content,
-      language: file.language
-    };
+    const fileId = file.id || `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    setFiles(prevFiles => [...prevFiles, newFile]);
-    return newFile.id;
-  }, []);
+    // Check if the file with the same name already exists
+    const existingFileIndex = files.findIndex(f => f.name === file.name);
+    
+    if (existingFileIndex !== -1) {
+      // Update the existing file
+      setFiles(prevFiles => 
+        prevFiles.map((f, index) => 
+          index === existingFileIndex 
+            ? { ...f, content: file.content, language: file.language } 
+            : f
+        )
+      );
+      return files[existingFileIndex].id;
+    } else {
+      // Add a new file
+      const newFile: CodeFile = {
+        id: fileId,
+        name: file.name,
+        content: file.content,
+        language: file.language
+      };
+      
+      setFiles(prevFiles => [...prevFiles, newFile]);
+      return newFile.id;
+    }
+  }, [files]);
   
   const removeFile = useCallback((fileId: string) => {
     setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
@@ -92,6 +110,14 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
     if (file) {
       setActiveFileId(fileId);
       setCode(file.content);
+      
+      // Also update the compiled code to match the active file
+      try {
+        setCompiledCode(file.content);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     }
   }, [files]);
   

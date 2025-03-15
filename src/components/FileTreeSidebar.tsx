@@ -174,7 +174,7 @@ const FileTreeSidebar: React.FC<{
       children: []
     };
     
-    // Add user files to components folder
+    // Add all user files directly as components
     files.forEach(file => {
       // Create a file item for each file
       const fileItem: FileItem = {
@@ -184,11 +184,23 @@ const FileTreeSidebar: React.FC<{
         extension: file.name.split('.').pop()
       };
       
-      componentsFolder.children?.push(fileItem);
+      // Check if the file belongs to components folder based on name pattern
+      if (file.name.includes('Component') || 
+          file.name.includes('.jsx') || 
+          file.name.includes('.tsx') || 
+          file.name.includes('.js') || 
+          file.name.includes('.ts')) {
+        componentsFolder.children?.push(fileItem);
+      } else {
+        // Add other files directly to src
+        srcFolder.children?.push(fileItem);
+      }
     });
     
-    // Add components folder to src
-    srcFolder.children?.push(componentsFolder);
+    // Only add components folder to src if it has children
+    if (componentsFolder.children && componentsFolder.children.length > 0) {
+      srcFolder.children?.push(componentsFolder);
+    }
     
     // Add some standard project files
     setFileTreeData([
@@ -208,6 +220,13 @@ const FileTreeSidebar: React.FC<{
     ]);
   }, [files]);
 
+  const handleFileSelectWrapper = (file: FileItem) => {
+    console.log("Selected file:", file.name);
+    if (onFileSelect) {
+      onFileSelect(file);
+    }
+  };
+
   return (
     <div className={cn("h-full bg-black/20 glass-morphism border-r border-white/10", className)}>
       <div className="p-3 border-b border-white/10 bg-black/10">
@@ -217,7 +236,7 @@ const FileTreeSidebar: React.FC<{
         <div className="p-2">
           <FileTree 
             data={fileTreeData} 
-            onFileSelect={onFileSelect}
+            onFileSelect={handleFileSelectWrapper}
             selectedFileId={selectedFileId}
           />
         </div>

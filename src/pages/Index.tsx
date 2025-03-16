@@ -15,33 +15,8 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-const initialCode = `
-import React from 'react';
-
-const MyComponent = () => {
-  return (
-    <div className="p-6 max-w-md mx-auto bg-gray-900 text-white rounded-xl shadow-md flex items-center space-x-4">
-      <div className="flex-shrink-0">
-        <div className="h-12 w-12 bg-black rounded-full flex items-center justify-center text-white font-bold">
-          UI
-        </div>
-      </div>
-      <div>
-        <div className="text-xl font-medium">Create UI with Code</div>
-        <p className="text-gray-400">Write code and see instant preview</p>
-        <button className="mt-3 px-4 py-1 text-sm text-white font-semibold rounded-full border border-white hover:bg-white hover:text-black hover:border-transparent focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors">
-          Learn more
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default MyComponent;
-`;
-
 const Index = () => {
-  const { code, setCode, compiledCode, error, files, activeFileId, setActiveFile } = useCodeState({ initialCode });
+  const { code, setCode, compiledCode, error, files, activeFileId, setActiveFile } = useCodeState();
   const [activeView, setActiveView] = useState<'preview' | 'code'>('preview');
   const [showFileSidebar, setShowFileSidebar] = useState(true);
 

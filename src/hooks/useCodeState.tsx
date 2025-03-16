@@ -12,42 +12,24 @@ interface CodeFile {
   language: string;
 }
 
-const defaultCode = `
-import React from 'react';
-
-const MyComponent = () => {
-  return (
-    <div className="p-4 bg-blue-500 text-white rounded-lg">
-      <h1 className="text-2xl font-bold">Hello World</h1>
-      <p className="mt-2">Ask the AI to create a component or feature!</p>
-      <button className="mt-4 px-4 py-2 bg-white text-blue-500 rounded-md hover:bg-gray-100 transition-colors">
-        Click me
-      </button>
-    </div>
-  );
-};
-
-export default MyComponent;
-`;
-
-export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = {}) => {
+export const useCodeState = ({ initialCode = '' }: UseCodeStateProps = {}) => {
   const [code, setCode] = useState(initialCode);
   const [compiledCode, setCompiledCode] = useState<string>(initialCode);
   const [error, setError] = useState<string | null>(null);
-  const [files, setFiles] = useState<CodeFile[]>([
-    { id: 'default', name: 'App.tsx', content: initialCode, language: 'tsx' },
-  ]);
-  const [activeFileId, setActiveFileId] = useState<string>('default');
+  const [files, setFiles] = useState<CodeFile[]>([]);
+  const [activeFileId, setActiveFileId] = useState<string>('');
 
   const updateCode = useCallback((newCode: string) => {
     setCode(newCode);
     
     // Also update the active file's content
-    setFiles(prevFiles => 
-      prevFiles.map(file => 
-        file.id === activeFileId ? { ...file, content: newCode } : file
-      )
-    );
+    if (activeFileId) {
+      setFiles(prevFiles => 
+        prevFiles.map(file => 
+          file.id === activeFileId ? { ...file, content: newCode } : file
+        )
+      );
+    }
     
     // In a real implementation, this would compile JSX/TSX to JS
     // For our demo, we'll just set it directly
@@ -85,7 +67,7 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
         language: file.language
       };
       
-      // Add new file with forceUpdate to ensure state changes are detected
+      // Add new file
       setFiles(prevFiles => {
         const newFiles = [...prevFiles, newFile];
         console.log(`Added new file: ${file.name} with ID: ${fileId}`);
@@ -93,9 +75,16 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
         return newFiles;
       });
       
+      // If this is the first file or there's no active file, set it as active
+      if (files.length === 0 || !activeFileId) {
+        setActiveFileId(fileId);
+        setCode(file.content);
+        setCompiledCode(file.content);
+      }
+      
       return fileId;
     }
-  }, [files]);
+  }, [files, activeFileId]);
   
   const removeFile = useCallback((fileId: string) => {
     setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
@@ -107,6 +96,11 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
         if (remainingFiles.length > 0) {
           setActiveFileId(remainingFiles[0].id);
           setCode(remainingFiles[0].content);
+          setCompiledCode(remainingFiles[0].content);
+        } else {
+          setActiveFileId('');
+          setCode('');
+          setCompiledCode('');
         }
         return remainingFiles;
       });

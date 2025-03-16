@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Folder, 
@@ -127,6 +126,16 @@ const FileTreeItem: React.FC<{
   );
 };
 
+// Empty state component when no files are generated
+const EmptyFileTree: React.FC = () => (
+  <div className="py-6 px-4 text-center text-sm text-white/60">
+    <div className="flex flex-col items-center justify-center gap-3">
+      <Bot size={24} className="text-white/40" />
+      <p>AI generated files will automatically appear here</p>
+    </div>
+  </div>
+);
+
 // Main file tree component
 export const FileTree: React.FC<FileTreeProps> = ({
   data,
@@ -136,14 +145,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   hasGeneratedFiles
 }) => {
   if (!hasGeneratedFiles) {
-    return (
-      <div className={cn("py-6 px-4 text-center text-sm text-white/60", className)}>
-        <div className="flex flex-col items-center justify-center gap-3">
-          <Bot size={24} className="text-white/40" />
-          <p>AI generated files will automatically appear here</p>
-        </div>
-      </div>
-    );
+    return <EmptyFileTree />;
   }
   
   return (
@@ -167,7 +169,7 @@ const FileTreeSidebar: React.FC<{
   selectedFileId?: string;
   className?: string;
 }> = ({ onFileSelect, selectedFileId, className }) => {
-  const { files, getAllFiles } = useCodeState();
+  const { getAllFiles } = useCodeState();
   const [fileTreeData, setFileTreeData] = useState<FileItem[]>([]);
   const [hasGeneratedFiles, setHasGeneratedFiles] = useState(false);
   
@@ -176,10 +178,14 @@ const FileTreeSidebar: React.FC<{
     const currentFiles = getAllFiles();
     console.log("Current files in state:", currentFiles.length, currentFiles.map(f => f.name));
     
-    // Check if we have user-generated files (ignore the default file if it's the only one)
-    const userGeneratedFiles = currentFiles.filter(file => file.id !== 'default');
-    setHasGeneratedFiles(userGeneratedFiles.length > 0);
-    console.log("Has generated files:", userGeneratedFiles.length > 0);
+    // Check if we have user-generated files
+    setHasGeneratedFiles(currentFiles.length > 0);
+    console.log("Has generated files:", currentFiles.length > 0);
+    
+    if (currentFiles.length === 0) {
+      setFileTreeData([]);
+      return;
+    }
     
     // Create the src folder
     const srcFolder: FileItem = {
@@ -197,13 +203,8 @@ const FileTreeSidebar: React.FC<{
       children: []
     };
     
-    // Add all user files as components
+    // Add all files to appropriate folders
     currentFiles.forEach(file => {
-      // Skip the default file if we have user-generated files
-      if (file.id === 'default' && userGeneratedFiles.length > 0) {
-        return;
-      }
-      
       // Create a file item for each file
       const fileItem: FileItem = {
         id: file.id,
@@ -212,46 +213,56 @@ const FileTreeSidebar: React.FC<{
         extension: file.name.split('.').pop()
       };
       
-      // Check if the file belongs to components folder based on name pattern
-      if (file.name.includes('Component') || 
-          file.name.includes('.jsx') || 
-          file.name.includes('.tsx') || 
-          file.name.includes('.js') || 
-          file.name.includes('.ts')) {
-        componentsFolder.children?.push(fileItem);
+      // Sort files into appropriate folders based on path
+      const fileName = file.name;
+      
+      if (fileName.includes('/')) {
+        // Handle nested paths
+        const parts = fileName.split('/');
+        const actualFileName = parts.pop() || '';
+        
+        // Update file item with just the filename
+        fileItem.name = actualFileName;
+        
+        // For components folder
+        if (parts.includes('components')) {
+          componentsFolder.children?.push(fileItem);
+        } else {
+          // Add other files directly to src
+          srcFolder.children?.push(fileItem);
+        }
       } else {
-        // Add other files directly to src
-        srcFolder.children?.push(fileItem);
+        // Simple file detection
+        if (fileName.includes('Component') || 
+            fileName.endsWith('.jsx') || 
+            fileName.endsWith('.tsx') || 
+            fileName.endsWith('.js') || 
+            fileName.endsWith('.ts')) {
+          componentsFolder.children?.push(fileItem);
+        } else {
+          // Add other files directly to src
+          srcFolder.children?.push(fileItem);
+        }
       }
     });
     
-    // Only add components folder to src if it has children
-    if (componentsFolder.children && componentsFolder.children.length > 0) {
-      srcFolder.children?.push(componentsFolder);
+    // Only add folders that have children
+    const rootFolders: FileItem[] = [];
+    
+    // Add src folder if it has children or components folder has children
+    if ((srcFolder.children && srcFolder.children.length > 0) || 
+        (componentsFolder.children && componentsFolder.children.length > 0)) {
+      
+      // Only add components folder to src if it has children
+      if (componentsFolder.children && componentsFolder.children.length > 0) {
+        srcFolder.children?.push(componentsFolder);
+      }
+      
+      rootFolders.push(srcFolder);
     }
     
-    // If we have user-generated files, don't show the standard project files
-    if (userGeneratedFiles.length > 0) {
-      setFileTreeData([srcFolder]);
-    } else {
-      // Add standard project files for default view
-      setFileTreeData([
-        srcFolder,
-        {
-          id: 'public-folder',
-          name: 'public',
-          type: 'folder',
-          children: [
-            { id: 'favicon-ico', name: 'favicon.ico', type: 'file', extension: 'ico' },
-            { id: 'index-html', name: 'index.html', type: 'file', extension: 'html' }
-          ]
-        },
-        { id: 'package-json', name: 'package.json', type: 'file', extension: 'json' },
-        { id: 'tsconfig-json', name: 'tsconfig.json', type: 'file', extension: 'json' },
-        { id: 'vite-config-ts', name: 'vite.config.ts', type: 'file', extension: 'ts' }
-      ]);
-    }
-  }, [files, getAllFiles]);
+    setFileTreeData(rootFolders);
+  }, [getAllFiles]);
 
   const handleFileSelectWrapper = (file: FileItem) => {
     console.log("Selected file:", file.name, "with ID:", file.id);

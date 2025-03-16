@@ -58,16 +58,25 @@ const ChatPanel: React.FC = () => {
       const { files, message } = extractFilesFromAIResponse(response);
       
       if (files.length > 0) {
+        console.log(`Received ${files.length} files from AI response`);
+        const addedFileIds: string[] = [];
+        
         files.forEach((file, index) => {
-          addFile({
-            id: `generated-${Date.now()}-${index}`,
+          const fileId = addFile({
             name: file.name,
             content: file.content,
             language: file.language
           });
+          addedFileIds.push(fileId);
+          console.log(`Added file ${file.name} with ID ${fileId}`);
         });
         
-        setActiveFile(`generated-${Date.now()}-0`);
+        if (addedFileIds.length > 0) {
+          setActiveFile(addedFileIds[0]);
+          console.log(`Set active file to ${addedFileIds[0]}`);
+        }
+        
+        setGeneratedFiles(files);
         
         toast({
           title: "Files Generated",

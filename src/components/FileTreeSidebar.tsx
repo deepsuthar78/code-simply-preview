@@ -167,15 +167,19 @@ const FileTreeSidebar: React.FC<{
   selectedFileId?: string;
   className?: string;
 }> = ({ onFileSelect, selectedFileId, className }) => {
-  const { files } = useCodeState();
+  const { files, getAllFiles } = useCodeState();
   const [fileTreeData, setFileTreeData] = useState<FileItem[]>([]);
   const [hasGeneratedFiles, setHasGeneratedFiles] = useState(false);
   
   // Convert flat file list to tree structure
   useEffect(() => {
-    // Check if we have user-generated files (ignore the default file)
-    const userGeneratedFiles = files.filter(file => file.id !== 'default' || files.length > 1);
+    const currentFiles = getAllFiles();
+    console.log("Current files in state:", currentFiles.length, currentFiles.map(f => f.name));
+    
+    // Check if we have user-generated files (ignore the default file if it's the only one)
+    const userGeneratedFiles = currentFiles.filter(file => file.id !== 'default');
     setHasGeneratedFiles(userGeneratedFiles.length > 0);
+    console.log("Has generated files:", userGeneratedFiles.length > 0);
     
     // Create the src folder
     const srcFolder: FileItem = {
@@ -193,8 +197,13 @@ const FileTreeSidebar: React.FC<{
       children: []
     };
     
-    // Add all user files directly as components
-    files.forEach(file => {
+    // Add all user files as components
+    currentFiles.forEach(file => {
+      // Skip the default file if we have user-generated files
+      if (file.id === 'default' && userGeneratedFiles.length > 0) {
+        return;
+      }
+      
       // Create a file item for each file
       const fileItem: FileItem = {
         id: file.id,
@@ -221,26 +230,31 @@ const FileTreeSidebar: React.FC<{
       srcFolder.children?.push(componentsFolder);
     }
     
-    // Add some standard project files
-    setFileTreeData([
-      srcFolder,
-      {
-        id: 'public-folder',
-        name: 'public',
-        type: 'folder',
-        children: [
-          { id: 'favicon-ico', name: 'favicon.ico', type: 'file', extension: 'ico' },
-          { id: 'index-html', name: 'index.html', type: 'file', extension: 'html' }
-        ]
-      },
-      { id: 'package-json', name: 'package.json', type: 'file', extension: 'json' },
-      { id: 'tsconfig-json', name: 'tsconfig.json', type: 'file', extension: 'json' },
-      { id: 'vite-config-ts', name: 'vite.config.ts', type: 'file', extension: 'ts' }
-    ]);
-  }, [files]);
+    // If we have user-generated files, don't show the standard project files
+    if (userGeneratedFiles.length > 0) {
+      setFileTreeData([srcFolder]);
+    } else {
+      // Add standard project files for default view
+      setFileTreeData([
+        srcFolder,
+        {
+          id: 'public-folder',
+          name: 'public',
+          type: 'folder',
+          children: [
+            { id: 'favicon-ico', name: 'favicon.ico', type: 'file', extension: 'ico' },
+            { id: 'index-html', name: 'index.html', type: 'file', extension: 'html' }
+          ]
+        },
+        { id: 'package-json', name: 'package.json', type: 'file', extension: 'json' },
+        { id: 'tsconfig-json', name: 'tsconfig.json', type: 'file', extension: 'json' },
+        { id: 'vite-config-ts', name: 'vite.config.ts', type: 'file', extension: 'ts' }
+      ]);
+    }
+  }, [files, getAllFiles]);
 
   const handleFileSelectWrapper = (file: FileItem) => {
-    console.log("Selected file:", file.name);
+    console.log("Selected file:", file.name, "with ID:", file.id);
     if (onFileSelect) {
       onFileSelect(file);
     }

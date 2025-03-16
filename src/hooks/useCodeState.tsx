@@ -85,9 +85,15 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
         language: file.language
       };
       
-      setFiles(prevFiles => [...prevFiles, newFile]);
-      console.log(`Added new file: ${file.name} with ID: ${fileId}`);
-      return newFile.id;
+      // Add new file with forceUpdate to ensure state changes are detected
+      setFiles(prevFiles => {
+        const newFiles = [...prevFiles, newFile];
+        console.log(`Added new file: ${file.name} with ID: ${fileId}`);
+        console.log(`Total files after adding: ${newFiles.length}`);
+        return newFiles;
+      });
+      
+      return fileId;
     }
   }, [files]);
   
@@ -130,6 +136,10 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
     return files.find(file => file.id === fileId);
   }, [files]);
 
+  const getAllFiles = useCallback(() => {
+    return [...files];
+  }, [files]);
+
   return {
     code,
     setCode: updateCode,
@@ -140,6 +150,7 @@ export const useCodeState = ({ initialCode = defaultCode }: UseCodeStateProps = 
     removeFile,
     activeFileId,
     setActiveFile,
-    getFileById
+    getFileById,
+    getAllFiles
   };
 };

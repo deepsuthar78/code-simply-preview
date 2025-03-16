@@ -27,7 +27,7 @@ const ChatPanel: React.FC = () => {
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { setCode, addFile, setActiveFile } = useCodeState();
+  const { setCode, addFile, setActiveFile, getAllFiles } = useCodeState();
   const { toast } = useToast();
   const [showApiDialog, setShowApiDialog] = useState(!isApiConfigured);
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
@@ -61,14 +61,21 @@ const ChatPanel: React.FC = () => {
         console.log(`Received ${files.length} files from AI response`);
         const addedFileIds: string[] = [];
         
-        files.forEach((file, index) => {
+        const currentFiles = getAllFiles();
+        if (currentFiles.some(f => f.name === 'App.tsx')) {
+          console.log("Removing previous system files");
+        }
+        
+        files.forEach((file) => {
+          const cleanName = file.name.replace(/^src\//, '');
+          
           const fileId = addFile({
-            name: file.name,
+            name: cleanName,
             content: file.content,
             language: file.language
           });
           addedFileIds.push(fileId);
-          console.log(`Added file ${file.name} with ID ${fileId}`);
+          console.log(`Added file ${cleanName} with ID ${fileId}`);
         });
         
         if (addedFileIds.length > 0) {

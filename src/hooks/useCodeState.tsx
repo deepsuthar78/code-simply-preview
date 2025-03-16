@@ -67,10 +67,13 @@ export const useCodeState = ({ initialCode = '' }: UseCodeStateProps = {}) => {
         language: file.language
       };
       
-      // Add new file
+      // Add new file - ensuring the name is normalized
       setFiles(prevFiles => {
+        // Normalize the file name by removing any leading/trailing spaces
+        newFile.name = newFile.name.trim();
+        
         const newFiles = [...prevFiles, newFile];
-        console.log(`Added new file: ${file.name} with ID: ${fileId}`);
+        console.log(`Added new file: ${newFile.name} with ID: ${fileId}`);
         console.log(`Total files after adding: ${newFiles.length}`);
         return newFiles;
       });
@@ -131,7 +134,13 @@ export const useCodeState = ({ initialCode = '' }: UseCodeStateProps = {}) => {
   }, [files]);
 
   const getAllFiles = useCallback(() => {
+    console.log("getAllFiles called, returning", files.length, "files");
     return [...files];
+  }, [files]);
+
+  // Debug: Log files when they change
+  useEffect(() => {
+    console.log("Files state updated:", files.map(f => f.name));
   }, [files]);
 
   return {

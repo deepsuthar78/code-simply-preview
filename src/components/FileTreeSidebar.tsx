@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Folder, 
@@ -187,7 +188,7 @@ const FileTreeSidebar: React.FC<{
       return;
     }
     
-    // Create the src folder
+    // Create the root folder (will contain all files)
     const srcFolder: FileItem = {
       id: 'src-folder',
       name: 'src',
@@ -195,73 +196,29 @@ const FileTreeSidebar: React.FC<{
       children: []
     };
     
-    // Create components folder
-    const componentsFolder: FileItem = {
-      id: 'components-folder',
-      name: 'components',
-      type: 'folder',
-      children: []
-    };
-    
-    // Add all files to appropriate folders
+    // Add all files directly to src folder (simplified approach)
     currentFiles.forEach(file => {
       // Create a file item for each file
+      const fileName = file.name.includes('/') ? file.name.split('/').pop()! : file.name;
+      
       const fileItem: FileItem = {
         id: file.id,
-        name: file.name,
+        name: fileName,
         type: 'file',
-        extension: file.name.split('.').pop()
+        extension: fileName.split('.').pop()
       };
       
-      // Sort files into appropriate folders based on path
-      const fileName = file.name;
-      
-      if (fileName.includes('/')) {
-        // Handle nested paths
-        const parts = fileName.split('/');
-        const actualFileName = parts.pop() || '';
-        
-        // Update file item with just the filename
-        fileItem.name = actualFileName;
-        
-        // For components folder
-        if (parts.includes('components')) {
-          componentsFolder.children?.push(fileItem);
-        } else {
-          // Add other files directly to src
-          srcFolder.children?.push(fileItem);
-        }
-      } else {
-        // Simple file detection
-        if (fileName.includes('Component') || 
-            fileName.endsWith('.jsx') || 
-            fileName.endsWith('.tsx') || 
-            fileName.endsWith('.js') || 
-            fileName.endsWith('.ts')) {
-          componentsFolder.children?.push(fileItem);
-        } else {
-          // Add other files directly to src
-          srcFolder.children?.push(fileItem);
-        }
-      }
+      // Add to src folder
+      srcFolder.children?.push(fileItem);
     });
     
-    // Only add folders that have children
-    const rootFolders: FileItem[] = [];
-    
-    // Add src folder if it has children or components folder has children
-    if ((srcFolder.children && srcFolder.children.length > 0) || 
-        (componentsFolder.children && componentsFolder.children.length > 0)) {
-      
-      // Only add components folder to src if it has children
-      if (componentsFolder.children && componentsFolder.children.length > 0) {
-        srcFolder.children?.push(componentsFolder);
-      }
-      
-      rootFolders.push(srcFolder);
+    // Only add folder if it has children
+    if (srcFolder.children && srcFolder.children.length > 0) {
+      setFileTreeData([srcFolder]);
+    } else {
+      setFileTreeData([]);
     }
     
-    setFileTreeData(rootFolders);
   }, [getAllFiles]);
 
   const handleFileSelectWrapper = (file: FileItem) => {
